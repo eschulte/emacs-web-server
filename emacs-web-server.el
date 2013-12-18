@@ -3,7 +3,7 @@
 ;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
-;; Keywords: elnode html sprunge paste
+;; Keywords: http
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Code:
