@@ -10,6 +10,7 @@
 (require 'emacs-web-server-status-codes)
 (require 'mail-parse)
 (require 'eieio)
+(eval-when-compile (require 'cl))
 (require 'cl-lib)
 
 (defclass ews-server ()
