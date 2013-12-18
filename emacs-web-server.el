@@ -29,7 +29,7 @@
 (defvar ews-time-format "%Y.%m.%d.%H.%M.%S.%N"
   "Logging time format passed to `format-time-string'.")
 
-(defun ews-start (handler port &optional log-buffer host)
+(defun ews-start (handler port &optional log-buffer &rest network-args)
   "Start a server using HANDLER and return the server object.
 
 HANDLER should be a list of cons of the form (MATCH . ACTION),
@@ -39,6 +39,9 @@ in which case STRING is matched against the value of the header
 specified by KEYWORD.  In either case when MATCH returns non-nil,
 then the function ACTION is called with two arguments, the
 process and the request object.
+
+Any supplied NETWORK-ARGS are assumed to be keyword arguments for
+`make-network-process' to which they are passed directly.
 
 For example, the following starts a simple hello-world server on
 port 8080.
@@ -66,14 +69,14 @@ function.
 "
   (let ((server (make-instance 'ews-server :handler handler :port port)))
     (setf (process server)
-          (make-network-process
+          (apply
+           #'make-network-process
            :name "ews-server"
            :service (port server)
            :filter 'ews-filter
-           :server 't
-           :nowait 't
+           :server t
+           :nowait t
            :family 'ipv4
-           :host host
            :plist (list :server server)
            :log (when log-buffer
                   (lexical-let ((buf log-buffer))
@@ -83,7 +86,8 @@ function.
                           (goto-char (point-max))
                           (insert (format "%s\t%s\t%s\t%s"
                                           (format-time-string ews-time-format)
-                                          (first c) (second c) message)))))))))
+                                          (first c) (second c) message)))))))
+           network-args))
     (push server ews-servers)
     server))
 
