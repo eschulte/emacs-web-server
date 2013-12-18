@@ -16,17 +16,35 @@
    (port    :initarg :port    :accessor port    :initform nil)
    (clients :initarg :clients :accessor clients :initform nil)))
 
+(defvar ews-servers nil
+  "List holding all ews servers.")
+
 (defvar ews-time-format "%Y.%m.%d.%H.%M.%S.%N"
   "Logging time format passed to `format-time-string'.")
 
 (defun ews-start (handler port &optional log-buffer host)
   "Start a server using HANDLER and return the server object.
 
-HANDLER should be a list of cons of the form (MATCH . DO), where
-MATCH is either a function call on the URI or a regular
-expression which attempts to match the URI.  In either case when
-MATCH returns non-nil, then DO is called on two arguments, the
-URI and any post data."
+HANDLER should be a list of cons of the form (MATCH . ACTION),
+where MATCH is either a function (in which case it is called on
+the request object) or a cons cell of the form (KEYWORD . STRING)
+in which case STRING is matched against the value of the header
+specified by KEYWORD.  In either case when MATCH returns non-nil,
+then the function ACTION is called with two arguments, the
+process and the request object.
+
+For example, the following starts a simple hello-world server on
+port 8080.
+
+  (ews-start
+   '(((:GET . \".*\") .
+      (lambda (proc request)
+        (process-send-string proc
+         \"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nhello world\r\n\")
+        t)))
+   8080)
+
+"
   (let ((server (make-instance 'ews-server :handler handler :port port)))
     (setf (process server)
           (make-network-process
@@ -47,10 +65,12 @@ URI and any post data."
                           (insert (format "%s\t%s\t%s\t%s"
                                           (format-time-string ews-time-format)
                                           (first c) (second c) message)))))))))
+    (push server ews-servers)
     server))
 
 (defun ews-stop (server)
   "Stop SERVER."
+  (setq ews-servers (remove server ews-servers))
   (mapc #'delete-process (append (mapcar #'car (clients server))
                                  (list (process server)))))
 
@@ -71,14 +91,32 @@ URI and any post data."
     (let* ((client (assoc proc clients)) ; clients are (proc pending headers)
            (pending (concat (cadr client) string))
            (last-index 0) index)
-      ;; parse headers and append to client
-      (while (setq index (string-match "\r\n" pending last-index))
-        ;; double newline indicates no more headers
-        (unless (= last-index index)
+      (catch 'finished-parsing-headers
+        ;; parse headers and append to client
+        (while (setq index (string-match "\r\n" pending last-index))
+          (when (= last-index index) ; double \r\n, done headers, call handler
+            (throw 'finished-parsing-headers
+                   (when (ews-call-handler proc (cddr client) handler)
+                     (setq clients (assq-delete-all proc clients))
+                     (delete-process proc))))
           (setcdr (last client)
-                  (ews-parse (substring pending last-index index))))
-        (setq last-index (+ index 2)))
-      (setcar (cdr client) (substring pending last-index)))))
+                  (ews-parse (substring pending last-index index)))
+          (setq last-index (+ index 2)))
+        (setcar (cdr client) (substring pending last-index))))))
+
+(defun ews-call-handler (proc request handler)
+  (catch 'matched-handler
+    (mapc (lambda (handler)
+            (let ((match (car handler))
+                  (function (cdr handler)))
+              (when (or (and (consp match)
+                             (assoc (car match) request)
+                             (string-match (cdr match)
+                                           (cdr (assoc (car match) request))))
+                        (and (functionp match) (funcall match request)))
+                (throw 'matched-handler (funcall function proc request)))))
+          handler)
+    (error "[ews] no handler matched request:%S" request)))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
