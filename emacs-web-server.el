@@ -7,6 +7,7 @@
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Code:
+(require 'emacs-web-server-status-codes)
 (require 'eieio)
 (require 'cl-lib)
 
@@ -41,6 +42,18 @@ port 8080.
       (lambda (proc request)
         (process-send-string proc
          \"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nhello world\r\n\")
+        t)))
+   8080)
+
+Equivalently, the following starts an identical server using a
+function MATCH and the `ews-response-header' convenience
+function.
+
+  (ews-start
+   '(((lambda (_) t) .
+      (lambda (proc request)
+        (ews-response-header proc 200 '(\"Content-type\" . \"text/plain\"))
+        (process-send-string proc \"hello world\")
         t)))
    8080)
 
@@ -117,6 +130,19 @@ port 8080.
                 (throw 'matched-handler (funcall function proc request)))))
           handler)
     (error "[ews] no handler matched request:%S" request)))
+
+
+;;; Convenience functions to write responses
+(defun ews-response-header (proc code &rest header)
+  "Send the headers for an HTTP response to PROC.
+Currently CODE should be an HTTP status code, see
+`ews-status-codes' for a list of known codes."
+  (let ((headers
+         (cons
+          (format "HTTP/1.1 %d %s" code (cdr (assoc code ews-status-codes)))
+          (mapcar (lambda (h) (format "%s: %s" (car h) (cdr h))) header))))
+    (setcdr (last headers) (list "" ""))
+    (process-send-string proc (mapconcat #'identity headers "\r\n"))))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
