@@ -1,8 +1,8 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [0/4]
-** TODO Handle POST requests
+* Tasks [1/4]
+** DONE Handle POST requests
 1. read standard for POST data
 2. parse multi-line headers with boundaries
 

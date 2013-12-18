@@ -18,6 +18,11 @@
    (port    :initarg :port    :accessor port    :initform nil)
    (clients :initarg :clients :accessor clients :initform nil)))
 
+(defclass ews-client ()
+  ((leftover :initarg :leftover :accessor leftover :initform "")
+   (boundary :initarg :boundary :accessor boundary :initform nil)
+   (headers  :initarg :headers  :accessor headers  :initform (list nil))))
+
 (defvar ews-servers nil
   "List holding all ews servers.")
 
@@ -89,43 +94,85 @@ function.
                                  (list (process server)))))
 
 (defun ews-parse (string)
-  (cond
-   ((string-match "^GET \\([^[:space:]]+\\) \\([^[:space:]]+\\)$" string)
-    (list (cons :GET (match-string 1 string))
-          (cons :TYPE (match-string 2 string))))
-   ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
-    (list (cons (intern (concat ":" (upcase (match-string 1 string))))
-                (match-string 2 string))))
-   (:otherwise (message "[ews] bad header: %S" string) nil)))
+  (cl-flet ((to-keyword (s) (intern (concat ":" (upcase (match-string 1 s))))))
+    (cond
+     ((string-match
+       "^\\(GET\\|POST\\) \\([^[:space:]]+\\) \\([^[:space:]]+\\)$" string)
+      (list (cons (to-keyword (match-string 1 string)) (match-string 2 string))
+            (cons :TYPE (match-string 3 string))))
+     ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
+      (list (cons (to-keyword string) (match-string 2 string))))
+     (:otherwise (error "[ews] bad header: %S" string) nil))))
+
+(defun ews-trim (string)
+  (while (and (> (length string) 0)
+              (or (and (string-match "[\r\n]" (substring string -1))
+                       (setq string (substring string 0 -1)))
+                  (and (string-match "[\r\n]" (substring string 0 1))
+                       (setq string (substring string 1))))))
+  string)
+
+(defun ews-parse-multipart/form (string)
+  (when (string-match "[^[:space:]]" string) ; ignore empty
+    (unless (string-match "Content-Disposition:[[:space:]]*\\(.*\\)\r\n" string)
+      (error "missing Content-Disposition for multipart/form element."))
+    (let ((dp (mail-header-parse-content-disposition (match-string 1 string))))
+      (cons (cdr (assoc 'name (cdr dp)))
+            (cons (cons 'content (ews-trim (substring string (match-end 0))))
+                  (cdr dp))))))
 
 (defun ews-filter (proc string)
-  ;; TODO: parse post DATA, see the relevent test, and use these
-  ;;   - mail-header-parse-content-disposition
-  ;;   - mail-header-parse-content-type
   (with-slots (handler clients) (plist-get (process-plist proc) :server)
-    ;; register new client
-    (unless (assoc proc clients) (push (list proc "") clients))
-    (let* ((client (assoc proc clients)) ; clients are (proc pending headers)
-           (pending (concat (cadr client) string))
-           (last-index 0) index in-post)
+    (unless (assoc proc clients)
+      (push (cons proc (make-instance 'ews-client)) clients))
+    (let ((client (cdr (assoc proc clients))))
+      (when (ews-do-filter client string)
+        (when (ews-call-handler proc (cdr (headers client)) handler)
+          (setq clients (assq-delete-all proc clients))
+          (delete-process proc))))))
+
+(defun ews-do-filter (client string)
+  "Return non-nil when finished and the client may be deleted."
+  (with-slots (leftover boundary headers) client
+    (let ((pending (concat leftover string))
+          (delimiter (if boundary
+                         (regexp-quote (concat "\r\n--" boundary))
+                       "\r\n"))
+          (last-index 0) index tmp-index)
       (catch 'finished-parsing-headers
         ;; parse headers and append to client
-        (while (setq index (string-match "\r\n" pending last-index))
-          ;; double \r\n outside of post data -> done w/headers, call handler
-          (when (and (not in-post) (= last-index index))
-            (throw 'finished-parsing-headers
-                   (when (ews-call-handler proc (cddr client) handler)
-                     (setq clients (assq-delete-all proc clients))
-                     (delete-process proc))))
-          (if in-post
-              ;; build up post data, maybe set in-post to boundary
-              (error "TODO: handle POST data")
-            (let ((this (ews-parse (substring pending last-index index))))
-              (if (eql (caar this) :CONTENT-TYPE)
-                  (error "TODO: handle POST data")
-                (setcdr (last client) this))))
-          (setq last-index (+ index 2)))
-        (setcar (cdr client) (substring pending last-index))))))
+        (while (setq index (string-match delimiter pending last-index))
+          (let ((tmp (+ index (length delimiter))))
+            (cond
+             ;; Double \r\n outside of post data means we are done
+             ;; w/headers and should call the handler.
+             ((= last-index index)
+              (throw 'finished-parsing-headers t))
+             ;; Build up multipart data.
+             (boundary
+              (setcdr (last headers)
+                      (list (ews-parse-multipart/form
+                             (ews-trim
+                              (substring pending last-index index)))))
+              ;; a boundary suffixed by "--" indicates the end of the headers
+              (when (and (> (length pending) (+ tmp 2))
+                         (string= (substring pending tmp (+ tmp 2)) "--"))
+                (throw 'finished-parsing-headers t)))
+             ;; Standard header parsing.
+             (:otherwise
+              (let ((this (ews-parse (substring pending last-index index))))
+                (if (and (caar this) (eql (caar this) :CONTENT-TYPE))
+                    (cl-destructuring-bind (type &rest data)
+                        (mail-header-parse-content-type (cdar this))
+                      (unless (string= type "multipart/form-data")
+                        (error "TODO: handle content type %S" type))
+                      (when (assoc 'boundary data)
+                        (setq boundary (cdr (assoc 'boundary data)))
+                        (setq delimiter (concat "\r\n--" boundary))))
+                  (setcdr (last headers) this)))))
+            (setq last-index tmp)))
+        (setq leftover (ews-trim (substring pending last-index)))
+        nil))))
 
 (defun ews-call-handler (proc request handler)
   (catch 'matched-handler
