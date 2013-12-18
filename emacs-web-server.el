@@ -16,6 +16,9 @@
    (port    :initarg :port    :accessor port    :initform nil)
    (clients :initarg :clients :accessor clients :initform nil)))
 
+(defvar ews-time-format "%Y.%m.%d.%H.%M.%S.%N"
+  "Logging time format passed to `format-time-string'.")
+
 (defun ews-start (handler port &optional log-buffer host)
   "Start a server using HANDLER and return the server object.
 
@@ -26,15 +29,24 @@ MATCH returns non-nil, then DO is called on two arguments, the
 URI and any post data."
   (let ((server (make-instance 'ews-server :handler handler :port port)))
     (setf (process server)
-          (make-network-process :name "ews-server"
-                                :service (port server)
-                                :buffer log-buffer
-                                :filter 'ews-filter
-                                :server 't
-                                :nowait 't
-                                :family 'ipv4
-                                :host host
-                                :plist (list :server server)))
+          (make-network-process
+           :name "ews-server"
+           :service (port server)
+           :filter 'ews-filter
+           :server 't
+           :nowait 't
+           :family 'ipv4
+           :host host
+           :plist (list :server server)
+           :log (when log-buffer
+                  (lexical-let ((buf log-buffer))
+                    (lambda (server client message)
+                      (let ((c (process-contact client)))
+                        (with-current-buffer buf
+                          (goto-char (point-max))
+                          (insert (format "%s\t%s\t%s\t%s"
+                                          (format-time-string ews-time-format)
+                                          (first c) (second c) message)))))))))
     server))
 
 (defun ews-stop (server)
@@ -43,24 +55,18 @@ URI and any post data."
                                  (list (process server)))))
 
 (defun ews-filter (proc string)   
-  (cl-flet ((log (string buffer)
-                 (when buffer
-                   (with-current-buffer buffer
-                     (goto-char (point-max))
-                     (insert (format "%s %s" (current-time-string) string))))))
-    (with-slots (handler clients) (plist-get (process-plist proc) :server)
-      ;; register new client
-      (unless (assoc proc clients) (push (cons proc "") clients))
-      (let* ((pending (assoc proc clients))
-             (message (concat (cdr pending) string))
-             index)
-        ;; read whole strings
-        (while (setq index (string-match "\n" message))
-          (setq index (1+ index))
-          (process-send-string proc (substring message 0 index))
-          (log (substring message 0 index) (process-buffer proc))
-          (setq message (substring message index)))
-        (setcdr pending message)))))
+  (with-slots (handler clients) (plist-get (process-plist proc) :server)
+    ;; register new client
+    (unless (assoc proc clients) (push (cons proc "") clients))
+    (let* ((pending (assoc proc clients))
+           (message (concat (cdr pending) string))
+           index)
+      ;; read whole strings
+      (while (setq index (string-match "\n" message))
+        (setq index (1+ index))
+        (process-send-string proc (substring message 0 index))
+        (setq message (substring message index)))
+      (setcdr pending message))))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
