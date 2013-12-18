@@ -54,19 +54,31 @@ URI and any post data."
   (mapc #'delete-process (append (mapcar #'car (clients server))
                                  (list (process server)))))
 
-(defun ews-filter (proc string)   
+(defun ews-parse (string)
+  (cond
+   ((string-match "^GET \\([^[:space:]]+\\) \\([^[:space:]]+\\)$" string)
+    (list (cons :GET (match-string 1 string))
+          (cons :TYPE (match-string 2 string))))
+   ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
+    (list (cons (intern (concat ":" (upcase (match-string 1 string))))
+                (match-string 2 string))))
+   (:otherwise (message "[ews] bad header: %S" string) nil)))
+
+(defun ews-filter (proc string)
   (with-slots (handler clients) (plist-get (process-plist proc) :server)
     ;; register new client
-    (unless (assoc proc clients) (push (cons proc "") clients))
-    (let* ((pending (assoc proc clients))
-           (message (concat (cdr pending) string))
-           index)
-      ;; read whole strings
-      (while (setq index (string-match "\n" message))
-        (setq index (1+ index))
-        (process-send-string proc (substring message 0 index))
-        (setq message (substring message index)))
-      (setcdr pending message))))
+    (unless (assoc proc clients) (push (list proc "") clients))
+    (let* ((client (assoc proc clients)) ; clients are (proc pending headers)
+           (pending (concat (cadr client) string))
+           (last-index 0) index)
+      ;; parse headers and append to client
+      (while (setq index (string-match "\r\n" pending last-index))
+        ;; double newline indicates no more headers
+        (unless (= last-index index)
+          (setcdr (last client)
+                  (ews-parse (substring pending last-index index))))
+        (setq last-index (+ index 2)))
+      (setcar (cdr client) (substring pending last-index)))))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
