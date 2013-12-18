@@ -1,0 +1,24 @@
+                                                           -*- org -*-
+
+* Notes
+* Tasks [0/4]
+** TODO Handle POST requests
+1. read standard for POST data
+2. parse multi-line headers with boundaries
+
+For now keep this all incremental and in ews-filter.
+
+** TODO Makefile
+- byte-compile
+- package
+- test
+- benchmark
+
+** TODO Lazy header processing
+Use lazy sequence functions for header a-list to avoid parsing all
+headers.  For regexp matchers should stop when matched header is
+encountered (often the first one when :GET), For function matchers
+provide lazy version of assoc.
+
+** TODO use gnutls for https
+I think this should work.
