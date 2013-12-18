@@ -8,6 +8,7 @@
 
 ;;; Code:
 (require 'emacs-web-server-status-codes)
+(require 'mail-parse)
 (require 'eieio)
 (require 'cl-lib)
 
@@ -98,22 +99,31 @@ function.
    (:otherwise (message "[ews] bad header: %S" string) nil)))
 
 (defun ews-filter (proc string)
+  ;; TODO: parse post DATA, see the relevent test, and use these
+  ;;   - mail-header-parse-content-disposition
+  ;;   - mail-header-parse-content-type
   (with-slots (handler clients) (plist-get (process-plist proc) :server)
     ;; register new client
     (unless (assoc proc clients) (push (list proc "") clients))
     (let* ((client (assoc proc clients)) ; clients are (proc pending headers)
            (pending (concat (cadr client) string))
-           (last-index 0) index)
+           (last-index 0) index in-post)
       (catch 'finished-parsing-headers
         ;; parse headers and append to client
         (while (setq index (string-match "\r\n" pending last-index))
-          (when (= last-index index) ; double \r\n, done headers, call handler
+          ;; double \r\n outside of post data -> done w/headers, call handler
+          (when (and (not in-post) (= last-index index))
             (throw 'finished-parsing-headers
                    (when (ews-call-handler proc (cddr client) handler)
                      (setq clients (assq-delete-all proc clients))
                      (delete-process proc))))
-          (setcdr (last client)
-                  (ews-parse (substring pending last-index index)))
+          (if in-post
+              ;; build up post data, maybe set in-post to boundary
+              (error "TODO: handle POST data")
+            (let ((this (ews-parse (substring pending last-index index))))
+              (if (eql (caar this) :CONTENT-TYPE)
+                  (error "TODO: handle POST data")
+                (setcdr (last client) this))))
           (setq last-index (+ index 2)))
         (setcar (cdr client) (substring pending last-index))))))
 

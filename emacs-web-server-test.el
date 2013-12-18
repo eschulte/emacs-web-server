@@ -29,3 +29,26 @@
 (ert-deftest ews/parse-many-headers ()
   "Test that a number of headers parse successfully."
   (should t))
+
+(ert-deftest ews/parse-post-data ()
+  (let ((post-header
+         "POST / HTTP/1.1
+User-Agent: curl/7.33.0
+Host: localhost:8080
+Accept: */*
+Content-Length: 273
+Expect: 100-continue
+Content-Type: multipart/form-data; boundary=----------------f1270d0deb77af03
+
+------------------f1270d0deb77af03
+Content-Disposition: form-data; name=\"date\"
+
+Wed Dec 18 00:55:39 MST 2013
+
+------------------f1270d0deb77af03
+Content-Disposition: form-data; name=\"name\"
+
+\"schulte\"
+------------------f1270d0deb77af03--
+"))
+    (should 'properly-parse-post-data)))
