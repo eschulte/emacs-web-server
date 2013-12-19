@@ -9,6 +9,8 @@
 
 ;;; Code:
 (require 'emacs-web-server)
+(require 'cl-lib)
+(eval-when-compile (require 'cl))
 (require 'ert)
 
 (ert-deftest ews/keyword-style-handler ()
