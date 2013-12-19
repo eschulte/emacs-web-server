@@ -131,11 +131,12 @@ function.
     (unless (assoc proc clients)
       (push (cons proc (make-instance 'ews-client)) clients))
     (let ((client (cdr (assoc proc clients))))
-      (when (catch 'close-connection
-              (and (ews-do-filter client string)
-                   (ews-call-handler proc (cdr (headers client)) handler)))
-        (setq clients (assq-delete-all proc clients))
-        (delete-process proc)))))
+      (when (ews-do-filter client string)
+        (when (not (eq (catch 'close-connection
+                         (ews-call-handler proc (cdr (headers client)) handler))
+                       :keep-open))
+          (setq clients (assq-delete-all proc clients))
+          (delete-process proc))))))
 
 (defun ews-do-filter (client string)
   "Return non-nil when finished and the client may be deleted."
@@ -229,7 +230,7 @@ Currently CODE should be an HTTP status code, see
   (process-send-string proc (if msg-and-args
                                 (apply #'format msg-and-args)
                               "500 Internal Server Error"))
-  (throw 'close-connection :finished))
+  (throw 'close-connection nil))
 
 (defun ews-send-404 (proc &rest msg-and-args)
   "Send 404 \"Not Found\" to PROC with an optional message."
@@ -238,7 +239,7 @@ Currently CODE should be an HTTP status code, see
   (process-send-string proc (if msg-and-args
                                 (apply #'format msg-and-args)
                               "404 Not Found"))
-  (throw 'close-connection :finished))
+  (throw 'close-connection nil))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here

@@ -22,10 +22,11 @@ parse more than just the content-type headers.
 ** TODO non-multipart form data
 e.g., parameter strings
 
-** TODO some more convenience functionality [2/6]
+** TODO some more convenience functionality [3/6]
 - [ ] strip and parse URL query string
 - [X] think about defaulting to (name . content) for form elements
-- [ ] maybe don't require a non-nil return to cancel the connection,
+- [X] maybe don't require a non-nil return to cancel the connection,
+      instead only keep open if :keep-open is returned
   [ ] rather only keep on an explicit :keep-alive
 - [ ] function to send a file (with mime handling)
 - [ ] function to send a string (with header handling)
@@ -44,4 +45,8 @@ I think this should work.
 *** Matching
 *** Handler Functions
 At any time one can throw =close-connection= to abort the handler and
-close the conncetion.
+close the conncetion.  If the keyword =:keep-open= is thrown, then the
+handler aborts, but the connection isn't closed.
+
+A return value of =:keep-open= will keep the connection open,
+otherwise it is closed when the handler returns.
