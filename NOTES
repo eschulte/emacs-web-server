@@ -1,7 +1,7 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [2/5]
+* Tasks [2/7]
 ** DONE Handle POST requests
 1. read standard for POST data
 2. parse multi-line headers with boundaries
@@ -13,6 +13,12 @@ For now keep this all incremental and in ews-filter.
 - package
 - test
 - benchmark
+** TODO better parsing of multipart form blocks
+parse more than just the content-type headers.
+
+** TODO non-multipart form data
+e.g., parameter strings
+
 ** TODO some more convenience functionality [0/6]
 - [ ] strip and parse URL query string
 - [ ] think about defaulting to (name . content) for form elements
