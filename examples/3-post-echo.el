@@ -16,7 +16,7 @@
         (ews-response-header proc 200 '("Content-type" . "text/plain"))
         (process-send-string proc
           (if message
-              (format "you said %S\n" (cdr (assoc 'content message)))
+              (format "you said %S\n" message)
             "This is a POST request, but it has no \"message\".\n"))
         :finished)))
    ((:GET . ".*") .

@@ -22,9 +22,9 @@ parse more than just the content-type headers.
 ** TODO non-multipart form data
 e.g., parameter strings
 
-** TODO some more convenience functionality [1/6]
+** TODO some more convenience functionality [2/6]
 - [ ] strip and parse URL query string
-- [ ] think about defaulting to (name . content) for form elements
+- [X] think about defaulting to (name . content) for form elements
 - [ ] maybe don't require a non-nil return to cancel the connection,
   [ ] rather only keep on an explicit :keep-alive
 - [ ] function to send a file (with mime handling)

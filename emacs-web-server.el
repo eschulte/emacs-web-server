@@ -124,8 +124,7 @@ function.
   (when (string-match "Content-Disposition:[[:space:]]*\\(.*\\)\r\n" string)
     (let ((dp (mail-header-parse-content-disposition (match-string 1 string))))
       (cons (cdr (assoc 'name (cdr dp)))
-            (cons (cons 'content (ews-trim (substring string (match-end 0))))
-                  (cdr dp))))))
+            (ews-trim (substring string (match-end 0)))))))
 
 (defun ews-filter (proc string)
   (with-slots (handler clients) (plist-get (process-plist proc) :server)
