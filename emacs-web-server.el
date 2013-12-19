@@ -118,9 +118,8 @@ function.
   string)
 
 (defun ews-parse-multipart/form (string)
-  (when (string-match "[^[:space:]]" string) ; ignore empty
-    (unless (string-match "Content-Disposition:[[:space:]]*\\(.*\\)\r\n" string)
-      (error "missing Content-Disposition for multipart/form element."))
+  ;; ignore empty and non-content blocks
+  (when (string-match "Content-Disposition:[[:space:]]*\\(.*\\)\r\n" string)
     (let ((dp (mail-header-parse-content-disposition (match-string 1 string))))
       (cons (cdr (assoc 'name (cdr dp)))
             (cons (cons 'content (ews-trim (substring string (match-end 0))))
