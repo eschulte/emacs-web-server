@@ -101,7 +101,7 @@ function.
   (mapc #'delete-process (append (mapcar #'car (clients server))
                                  (list (process server)))))
 
-(defun ews-parse (string)
+(defun ews-parse (proc string)
   (cl-flet ((to-keyword (s) (intern (concat ":" (upcase (match-string 1 s))))))
     (cond
      ((string-match
@@ -133,14 +133,14 @@ function.
       (push (cons proc (make-instance 'ews-client)) clients))
     (let ((c (cdr (assoc proc clients))))
       (when (not (eq (catch 'close-connection
-                       (if (ews-do-filter c string)
+                       (if (ews-do-filter proc c string)
                            (ews-call-handler proc (cdr (headers c)) handler)
                          :keep-open))
                      :keep-open))
         (setq clients (assq-delete-all proc clients))
         (delete-process proc)))))
 
-(defun ews-do-filter (client string)
+(defun ews-do-filter (proc client string)
   "Return non-nil when finished and the client may be deleted."
   (with-slots (leftover boundary headers) client
     (let ((pending (concat leftover string))
@@ -179,7 +179,7 @@ function.
                 (throw 'finished-parsing-headers t)))
              ;; Standard header parsing.
              (:otherwise
-              (let ((this (ews-parse (substring pending last-index index))))
+              (let ((this (ews-parse proc (substring pending last-index index))))
                 (if (and (caar this) (eql (caar this) :CONTENT-TYPE))
                     (cl-destructuring-bind (type &rest data)
                         (mail-header-parse-content-type (cdar this))
