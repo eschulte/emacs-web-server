@@ -22,14 +22,14 @@ parse more than just the content-type headers.
 ** TODO non-multipart form data
 e.g., parameter strings
 
-** TODO some more convenience functionality [0/6]
+** TODO some more convenience functionality [1/6]
 - [ ] strip and parse URL query string
 - [ ] think about defaulting to (name . content) for form elements
 - [ ] maybe don't require a non-nil return to cancel the connection,
   [ ] rather only keep on an explicit :keep-alive
 - [ ] function to send a file (with mime handling)
 - [ ] function to send a string (with header handling)
-- [ ] send a 404 with some default text
+- [X] send a 404 with some default text
 
 ** TODO Lazy header processing
 Use lazy sequence functions for header a-list to avoid parsing all

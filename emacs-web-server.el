@@ -69,7 +69,7 @@ function.
 
 "
   (let ((server (make-instance 'ews-server :handler handler :port port))
-        (log (get-buffer-create log-buffer)))
+        (log (when log-buffer (get-buffer-create log-buffer))))
     (setf (process server)
           (apply
            #'make-network-process
@@ -79,7 +79,8 @@ function.
            :server t
            :nowait t
            :family 'ipv4
-           :plist (list :server server :log-buffer log)
+           :plist (append (list :server server)
+                          (when log (list :log-buffer log)))
            :log (when log
                   (lambda (proc client message)
                     (let ((c (process-contact client))
@@ -229,6 +230,15 @@ Currently CODE should be an HTTP status code, see
   (process-send-string proc (if msg-and-args
                                 (apply #'format msg-and-args)
                               "500 Internal Server Error"))
+  (throw 'close-connection :finished))
+
+(defun ews-send-404 (proc &rest msg-and-args)
+  "Send 404 \"Not Found\" to PROC with an optional message."
+  (ews-response-header proc 404
+    '("Content-type" . "text/plain"))
+  (process-send-string proc (if msg-and-args
+                                (apply #'format msg-and-args)
+                              "404 Not Found"))
   (throw 'close-connection :finished))
 
 (provide 'emacs-web-server)
