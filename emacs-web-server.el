@@ -8,7 +8,8 @@
 
 ;;; Code:
 (require 'emacs-web-server-status-codes)
-(require 'mail-parse)
+(require 'mail-parse)             ; to parse multipart data in headers
+(require 'mm-encode)              ; to look-up mime types for files
 (require 'eieio)
 (eval-when-compile (require 'cl))
 (require 'cl-lib)
@@ -240,6 +241,19 @@ Currently CODE should be an HTTP status code, see
                                 (apply #'format msg-and-args)
                               "404 Not Found"))
   (throw 'close-connection nil))
+
+(defun ews-send-file (proc path &optional mime-type)
+  "Send PATH to PROC.
+Optionally explicitly set MIME-TYPE, otherwise it is guessed by
+`mm-default-file-encoding'."
+  (let ((mime (or mime-type
+                  (mm-default-file-encoding path)
+                  "application/octet-stream")))
+    (ews-response-header proc 200 (cons "Content-type" mime))
+    (process-send-string proc
+      (with-temp-buffer
+        (insert-file-contents-literally path)
+        (buffer-string)))))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
