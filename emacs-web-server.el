@@ -155,7 +155,17 @@ function.
             (cond
              ;; Double \r\n outside of post data means we are done
              ;; w/headers and should call the handler.
-             ((= last-index index)
+             ((and (not boundary) (= last-index index))
+              (throw 'finished-parsing-headers t))
+             ;; Parse a URL
+             ((eq boundary :application/x-www-form-urlencoded)
+              (mapc (lambda (p)
+                      (when (string-match "=" p)
+                        (setcdr (last headers)
+                                (list (cons (substring p 0 (match-beginning 0))
+                                            (substring p (match-end 0)))))))
+                    (split-string (ews-trim (substring pending last-index))
+                                  "&" 'omit-nulls))
               (throw 'finished-parsing-headers t))
              ;; Build up multipart data.
              (boundary
@@ -173,11 +183,15 @@ function.
                 (if (and (caar this) (eql (caar this) :CONTENT-TYPE))
                     (cl-destructuring-bind (type &rest data)
                         (mail-header-parse-content-type (cdar this))
-                      (unless (string= type "multipart/form-data")
-                        (ews-error proc "TODO: handle content type: %S" type))
-                      (when (assoc 'boundary data)
-                        (setq boundary (cdr (assoc 'boundary data)))
-                        (setq delimiter (concat "\r\n--" boundary))))
+                      (cond
+                       ((string= type "multipart/form-data")
+                        (when (assoc 'boundary data)
+                          (setq boundary (cdr (assoc 'boundary data)))
+                          (setq delimiter (concat "\r\n--" boundary))))
+                       ((string= type "application/x-www-form-urlencoded")
+                        (setq boundary (intern (concat ":" (downcase type)))))
+                       (:otherwise
+                        (ews-error proc "TODO: handle content type: %S" type))))
                   (setcdr (last headers) this)))))
             (setq last-index tmp)))
         (setq leftover (ews-trim (substring pending last-index)))
