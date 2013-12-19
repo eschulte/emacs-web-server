@@ -1,7 +1,7 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [2/7]
+* Tasks [3/8]
 ** DONE Handle POST requests
 1. read standard for POST data
 2. parse multi-line headers with boundaries
@@ -13,6 +13,9 @@ For now keep this all incremental and in ews-filter.
 - package
 - test
 - benchmark
+** DONE catch errors and return an error code
+include an easy error handler like the 404 handler
+
 ** TODO better parsing of multipart form blocks
 parse more than just the content-type headers.
 
@@ -36,3 +39,9 @@ provide lazy version of assoc.
 
 ** TODO use gnutls for https
 I think this should work.
+* Documentation
+** Writing Handlers
+*** Matching
+*** Handler Functions
+At any time one can throw =close-connection= to abort the handler and
+close the conncetion.

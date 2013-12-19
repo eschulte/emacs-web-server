@@ -68,7 +68,8 @@ function.
    8080)
 
 "
-  (let ((server (make-instance 'ews-server :handler handler :port port)))
+  (let ((server (make-instance 'ews-server :handler handler :port port))
+        (log (get-buffer-create log-buffer)))
     (setf (process server)
           (apply
            #'make-network-process
@@ -78,16 +79,16 @@ function.
            :server t
            :nowait t
            :family 'ipv4
-           :plist (list :server server)
-           :log (when log-buffer
-                  (lexical-let ((buf log-buffer))
-                    (lambda (server client message)
-                      (let ((c (process-contact client)))
-                        (with-current-buffer buf
-                          (goto-char (point-max))
-                          (insert (format "%s\t%s\t%s\t%s"
-                                          (format-time-string ews-time-format)
-                                          (first c) (second c) message)))))))
+           :plist (list :server server :log-buffer log)
+           :log (when log
+                  (lambda (proc client message)
+                    (let ((c (process-contact client))
+                          (buf (plist-get (process-plist proc) :log-buffer)))
+                      (with-current-buffer buf
+                        (goto-char (point-max))
+                        (insert (format "%s\t%s\t%s\t%s"
+                                        (format-time-string ews-time-format)
+                                        (first c) (second c) message))))))
            network-args))
     (push server ews-servers)
     server))
@@ -107,7 +108,7 @@ function.
             (cons :TYPE (match-string 3 string))))
      ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
       (list (cons (to-keyword string) (match-string 2 string))))
-     (:otherwise (error "[ews] bad header: %S" string) nil))))
+     (:otherwise (ews-error proc "bad header: %S" string) nil))))
 
 (defun ews-trim (string)
   (while (and (> (length string) 0)
@@ -130,10 +131,11 @@ function.
     (unless (assoc proc clients)
       (push (cons proc (make-instance 'ews-client)) clients))
     (let ((client (cdr (assoc proc clients))))
-      (when (ews-do-filter client string)
-        (when (ews-call-handler proc (cdr (headers client)) handler)
-          (setq clients (assq-delete-all proc clients))
-          (delete-process proc))))))
+      (when (catch 'close-connection
+              (and (ews-do-filter client string)
+                   (ews-call-handler proc (cdr (headers client)) handler)))
+        (setq clients (assq-delete-all proc clients))
+        (delete-process proc)))))
 
 (defun ews-do-filter (client string)
   "Return non-nil when finished and the client may be deleted."
@@ -169,7 +171,7 @@ function.
                     (cl-destructuring-bind (type &rest data)
                         (mail-header-parse-content-type (cdar this))
                       (unless (string= type "multipart/form-data")
-                        (error "TODO: handle content type %S" type))
+                        (ews-error proc "TODO: handle content type: %S" type))
                       (when (assoc 'boundary data)
                         (setq boundary (cdr (assoc 'boundary data)))
                         (setq delimiter (concat "\r\n--" boundary))))
@@ -188,9 +190,24 @@ function.
                              (string-match (cdr match)
                                            (cdr (assoc (car match) request))))
                         (and (functionp match) (funcall match request)))
-                (throw 'matched-handler (funcall function proc request)))))
+                (throw 'matched-handler
+                       (condition-case e
+                           (funcall function proc request)
+                         (error (ews-error proc "Caught Error: %S" e)))))))
           handler)
-    (error "[ews] no handler matched request:%S" request)))
+    (ews-error proc "no handler matched request: %S" request)))
+
+(defun ews-error (proc msg &rest args)
+  (let ((buf (plist-get (process-plist proc) :log-buffer))
+        (c (process-contact proc)))
+    (when buf
+      (with-current-buffer buf
+        (goto-char (point-max))
+        (insert (format "%s\t%s\t%s\tEWS-ERROR: %s"
+                        (format-time-string ews-time-format)
+                        (first c) (second c)
+                        (apply #'format msg args)))))
+    (apply #'ews-send-500 proc msg args)))
 
 
 ;;; Convenience functions to write responses
@@ -204,6 +221,15 @@ Currently CODE should be an HTTP status code, see
           (mapcar (lambda (h) (format "%s: %s" (car h) (cdr h))) header))))
     (setcdr (last headers) (list "" ""))
     (process-send-string proc (mapconcat #'identity headers "\r\n"))))
+
+(defun ews-send-500 (proc &rest msg-and-args)
+  "Send 500 \"Internal Server Error\" to PROC with an optional message."
+  (ews-response-header proc 500
+    '("Content-type" . "text/plain"))
+  (process-send-string proc (if msg-and-args
+                                (apply #'format msg-and-args)
+                              "500 Internal Server Error"))
+  (throw 'close-connection :finished))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
