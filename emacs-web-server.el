@@ -131,13 +131,14 @@ function.
   (with-slots (handler clients) (plist-get (process-plist proc) :server)
     (unless (assoc proc clients)
       (push (cons proc (make-instance 'ews-client)) clients))
-    (let ((client (cdr (assoc proc clients))))
-      (when (ews-do-filter client string)
-        (when (not (eq (catch 'close-connection
-                         (ews-call-handler proc (cdr (headers client)) handler))
-                       :keep-open))
-          (setq clients (assq-delete-all proc clients))
-          (delete-process proc))))))
+    (let ((c (cdr (assoc proc clients))))
+      (when (not (eq (catch 'close-connection
+                       (if (ews-do-filter c string)
+                           (ews-call-handler proc (cdr (headers c)) handler)
+                         :keep-open))
+                     :keep-open))
+        (setq clients (assq-delete-all proc clients))
+        (delete-process proc)))))
 
 (defun ews-do-filter (client string)
   "Return non-nil when finished and the client may be deleted."
