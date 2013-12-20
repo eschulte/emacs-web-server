@@ -25,6 +25,25 @@
                                    (buffer-string))
                             (kill-buffer buf)))))))))
 
+(defvar ews-test-port 8999)
+
+(ert-deftest ews/hello-world-server ()
+  "Test that a simple hello-world server responds."
+  (lexical-let
+      ((server
+        (ews-start
+         '(((lambda (_) t) .
+            (lambda (proc request)
+              (ews-response-header proc 200 '("Content-type" . "text/plain"))
+              (process-send-string proc "hello world")
+              :finished)))
+         ews-test-port)))
+    (ews-test-run-asynch
+     (lambda (response)
+       (should (string= response "hello world"))
+       (ews-stop server))
+     "curl" "-s" (format "localhost:%d" ews-test-port))))
+
 (ert-deftest ews/keyword-style-handler ()
   "Ensure that a simple keyword-style handler matches correctly."
   (should t)                            ; should match one
