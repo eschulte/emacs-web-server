@@ -17,12 +17,10 @@
         (process-send-string proc
           (if message
               (format "you said %S\n" message)
-            "This is a POST request, but it has no \"message\".\n"))
-        :finished)))
+            "This is a POST request, but it has no \"message\".\n")))))
    ((:GET . ".*") .
     (lambda (proc request)
       (ews-response-header proc 200 '("Content-type" . "text/plain"))
       (process-send-string proc
-        "This is a GET request not a POST request.\n")
-      :finished)))
+        "This is a GET request not a POST request.\n"))))
  9003)

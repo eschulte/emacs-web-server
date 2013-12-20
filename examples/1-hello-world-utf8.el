@@ -26,6 +26,5 @@
         (ews-response-header proc 200
           '("Content-type" . "text/plain; charset=utf-8"))
         (process-send-string proc
-          (concat (nth (random (length hellos)) hellos) " world")))
-      :finished)))
+          (concat (nth (random (length hellos)) hellos) " world"))))))
  9001)
