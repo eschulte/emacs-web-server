@@ -13,6 +13,18 @@
 (eval-when-compile (require 'cl))
 (require 'ert)
 
+(defun ews-test-run-asynch (continuation program &rest program-args)
+  (let* ((buffer (generate-new-buffer "*ews-test-run-asynch*"))
+         (proc (apply #'start-process "ews-test" buffer program program-args)))
+    (set-process-sentinel proc
+      (lexical-let ((cont continuation)
+                    (buf buffer))
+        (lambda (proc signal)
+          (when (memq (process-status proc) '(exit signal))
+            (funcall cont (prog1 (with-current-buffer buf
+                                   (buffer-string))
+                            (kill-buffer buf)))))))))
+
 (ert-deftest ews/keyword-style-handler ()
   "Ensure that a simple keyword-style handler matches correctly."
   (should t)                            ; should match one
