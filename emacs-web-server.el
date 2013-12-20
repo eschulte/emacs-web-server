@@ -101,11 +101,17 @@ function.
   (mapc #'delete-process (append (mapcar #'car (clients server))
                                  (list (process server)))))
 
+(defvar ews-http-common-methods '(GET HEAD POST PUT DELETE TRACE)
+  "HTTP methods from http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html.")
+
+(defvar ews-http-method-rx
+  (format "^\\(%s\\) \\([^[:space:]]+\\) \\([^[:space:]]+\\)$"
+          (mapconcat #'symbol-name ews-http-common-methods "\\|")))
+
 (defun ews-parse (proc string)
   (cl-flet ((to-keyword (s) (intern (concat ":" (upcase (match-string 1 s))))))
     (cond
-     ((string-match
-       "^\\(GET\\|POST\\) \\([^[:space:]]+\\) \\([^[:space:]]+\\)$" string)
+     ((string-match ews-http-method-rx string)
       (list (cons (to-keyword (match-string 1 string)) (match-string 2 string))
             (cons :TYPE (match-string 3 string))))
      ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
