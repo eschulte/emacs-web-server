@@ -125,3 +125,40 @@ Content-Disposition: form-data; name=\"name\"
             (should (string= (cdr (assoc "date" headers))
                              "Wed Dec 18 00:55:39 MST 2013"))))
       (ews-stop server))))
+
+(ert-deftest ews/parse-another-post-data ()
+  "This one from an AJAX request."
+  (let ((server (ews-start nil ews-test-port))
+        (client (make-instance 'ews-client))
+        (header-string "POST /complex.org HTTP/1.1
+Host: localhost:4444
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+DNT: 1
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+X-Requested-With: XMLHttpRequest
+Referer: http://localhost:4444/complex.org
+Content-Length: 78
+Cookie: __utma=111872281.1462392269.1345929539.1345929539.1345929539.1
+Connection: keep-alive
+Pragma: no-cache
+Cache-Control: no-cache
+
+org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))
+    (unwind-protect
+        (progn
+          (ews-do-filter (process server) client header-string)
+          (let ((headers (cdr (headers client))))
+            (should (string= (cdr (assoc "path" headers)) "complex.org"))
+            (should (string= (cdr (assoc "beg" headers)) "64"))
+            (should (string= (cdr (assoc "end" headers)) "667"))
+            (should (string= (cdr (assoc "org" headers))
+                             "- one
+- two
+- three
+- four
+
+"))))
+      (ews-stop server))))

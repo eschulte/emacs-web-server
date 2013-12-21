@@ -152,6 +152,8 @@ function.
         (setq clients (assq-delete-all proc clients))
         (delete-process proc)))))
 
+;; TODO: content-type should switch from escaping on double \r\n, to
+;;       parsing multipart data on double \r\n
 (defun ews-do-filter (proc client string)
   "Return non-nil when finished and the client may be deleted."
   (with-slots (leftover boundary headers) client
