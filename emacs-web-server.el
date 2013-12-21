@@ -10,6 +10,7 @@
 (require 'emacs-web-server-status-codes)
 (require 'mail-parse)             ; to parse multipart data in headers
 (require 'mm-encode)              ; to look-up mime types for files
+(require 'url-util)               ; to decode url-encoded params
 (require 'eieio)
 (eval-when-compile (require 'cl))
 (require 'cl-lib)
@@ -112,8 +113,13 @@ function.
   (cl-flet ((to-keyword (s) (intern (concat ":" (upcase (match-string 1 s))))))
     (cond
      ((string-match ews-http-method-rx string)
-      (list (cons (to-keyword (match-string 1 string)) (match-string 2 string))
-            (cons :TYPE (match-string 3 string))))
+      (let ((method (to-keyword (match-string 1 string)))
+            (url (match-string 2 string)))
+        (if (string-match "?" url)
+            (cons (cons method (substring url 0 (match-beginning 0)))
+                  (url-parse-query-string (url-unhex-string
+                                           (substring url (match-end 0))) ))
+          (list (cons method url)))))
      ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
       (list (cons (to-keyword string) (match-string 2 string))))
      (:otherwise (ews-error proc "bad header: %S" string) nil))))
@@ -165,13 +171,9 @@ function.
               (throw 'finished-parsing-headers t))
              ;; Parse a URL
              ((eq boundary :application/x-www-form-urlencoded)
-              (mapc (lambda (p)
-                      (when (string-match "=" p)
-                        (setcdr (last headers)
-                                (list (cons (substring p 0 (match-beginning 0))
-                                            (substring p (match-end 0)))))))
-                    (split-string (ews-trim (substring pending last-index))
-                                  "&" 'omit-nulls))
+              (mapc (lambda (pair) (setcdr (last headers) (list pair)))
+                    (url-parse-query-string
+                     (ews-trim (substring pending last-index))))
               (throw 'finished-parsing-headers t))
              ;; Build up multipart data.
              (boundary

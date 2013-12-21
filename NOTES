@@ -1,7 +1,7 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [4/8]
+* Tasks [5/8]
 ** DONE Handle POST requests
 1. read standard for POST data
 2. parse multi-line headers with boundaries
@@ -22,8 +22,8 @@ parse more than just the content-type headers.
 ** DONE non-multipart form data
 e.g., parameter strings
 
-** TODO some more convenience functionality [5/6]
-- [ ] strip and parse URL query string
+** DONE some more convenience functionality [6/6]
+- [X] strip and parse URL query string
 - [X] parse urlencoded post data
 - [X] think about defaulting to (name . content) for form elements
 - [X] maybe don't require a non-nil return to cancel the connection,
