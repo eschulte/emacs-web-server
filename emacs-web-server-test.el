@@ -86,7 +86,7 @@ Connection: keep-alive
 "))
     (unwind-protect
         (progn
-          (ews-do-filter (process server) client header-string)
+          (ews-parse-request (process server) client header-string)
           (let ((headers (cdr (headers client))))
             (should (string= (cdr (assoc :ACCEPT-ENCODING headers))
                              "gzip, deflate"))
@@ -118,7 +118,7 @@ Content-Disposition: form-data; name=\"name\"
 "))
     (unwind-protect
         (progn
-          (ews-do-filter (process server) client header-string)
+          (ews-parse-request (process server) client header-string)
           (let ((headers (cdr (headers client))))
             (should (string= (cdr (assoc "name" headers))
                              "\"schulte\""))
@@ -149,10 +149,11 @@ Cache-Control: no-cache
 org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))
     (unwind-protect
         (progn
-          (ews-do-filter (process server) client header-string)
+          (ews-parse-request (process server) client header-string)
           (let ((headers (cdr (headers client))))
-            (should (string= (cdr (assoc "path" headers)) "complex.org"))
-            (should (string= (cdr (assoc "beg" headers)) "64"))
+            (message "headers:%S" headers)
+            (should (string= (cdr (assoc "path" headers)) "/complex.org"))
+            (should (string= (cdr (assoc "beg" headers)) "646"))
             (should (string= (cdr (assoc "end" headers)) "667"))
             (should (string= (cdr (assoc "org" headers))
                              "- one

@@ -109,6 +109,11 @@ function.
   (format "^\\(%s\\) \\([^[:space:]]+\\) \\([^[:space:]]+\\)$"
           (mapconcat #'symbol-name ews-http-common-methods "\\|")))
 
+(defun ews-parse-query-string (string)
+  "Thin wrapper around `url-parse-query-string'."
+  (mapcar (lambda (pair) (cons (first pair) (second pair)))
+          (url-parse-query-string string nil 'allow-newlines)))
+
 (defun ews-parse (proc string)
   (cl-flet ((to-keyword (s) (intern (concat ":" (upcase (match-string 1 s))))))
     (cond
@@ -117,8 +122,8 @@ function.
             (url (match-string 2 string)))
         (if (string-match "?" url)
             (cons (cons method (substring url 0 (match-beginning 0)))
-                  (url-parse-query-string (url-unhex-string
-                                           (substring url (match-end 0))) ))
+                  (ews-parse-query-string
+                   (url-unhex-string (substring url (match-end 0)))))
           (list (cons method url)))))
      ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
       (list (cons (to-keyword string) (match-string 2 string))))
@@ -145,64 +150,71 @@ function.
       (push (cons proc (make-instance 'ews-client)) clients))
     (let ((c (cdr (assoc proc clients))))
       (when (not (eq (catch 'close-connection
-                       (if (ews-do-filter proc c string)
+                       (if (ews-parse-request proc c string)
                            (ews-call-handler proc (cdr (headers c)) handler)
                          :keep-open))
                      :keep-open))
         (setq clients (assq-delete-all proc clients))
         (delete-process proc)))))
 
-;; TODO: content-type should switch from escaping on double \r\n, to
-;;       parsing multipart data on double \r\n
-(defun ews-do-filter (proc client string)
-  "Return non-nil when finished and the client may be deleted."
+(defun ews-parse-request (proc client string)
+  "Parse request STRING from CLIENT with process PROC.
+Return non-nil only when parsing is complete and CLIENT may be
+deleted."
   (with-slots (leftover boundary headers) client
     (let ((pending (concat leftover string))
-          (delimiter (if boundary
-                         (regexp-quote (concat "\r\n--" boundary))
-                       "\r\n"))
-          (last-index 0) index tmp-index)
+          (delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
+          ;; Track progress through string, always work with the
+          ;; section of string between LAST-INDEX and INDEX.
+          (last-index 0) index
+          ;; Current context, either a particular content-type for
+          ;; custom parsing or nil for no special parsing.
+          context)
       (catch 'finished-parsing-headers
         ;; parse headers and append to client
         (while (setq index (string-match delimiter pending last-index))
           (let ((tmp (+ index (length delimiter))))
-            (cond
-             ;; Double \r\n outside of post data means we are done
-             ;; w/headers and should call the handler.
-             ((and (not boundary) (= last-index index))
-              (throw 'finished-parsing-headers t))
-             ;; Parse a URL
-             ((eq boundary :application/x-www-form-urlencoded)
-              (mapc (lambda (pair) (setcdr (last headers) (list pair)))
-                    (url-parse-query-string
-                     (ews-trim (substring pending last-index))))
-              (throw 'finished-parsing-headers t))
-             ;; Build up multipart data.
-             (boundary
-              (setcdr (last headers)
-                      (list (ews-parse-multipart/form
-                             (ews-trim
-                              (substring pending last-index index)))))
-              ;; a boundary suffixed by "--" indicates the end of the headers
-              (when (and (> (length pending) (+ tmp 2))
-                         (string= (substring pending tmp (+ tmp 2)) "--"))
-                (throw 'finished-parsing-headers t)))
-             ;; Standard header parsing.
-             (:otherwise
-              (let ((this (ews-parse proc (substring pending last-index index))))
-                (if (and (caar this) (eql (caar this) :CONTENT-TYPE))
-                    (cl-destructuring-bind (type &rest data)
-                        (mail-header-parse-content-type (cdar this))
-                      (cond
-                       ((string= type "multipart/form-data")
-                        (when (assoc 'boundary data)
-                          (setq boundary (cdr (assoc 'boundary data)))
-                          (setq delimiter (concat "\r\n--" boundary))))
-                       ((string= type "application/x-www-form-urlencoded")
-                        (setq boundary (intern (concat ":" (downcase type)))))
-                       (:otherwise
-                        (ews-error proc "TODO: handle content type: %S" type))))
-                  (setcdr (last headers) this)))))
+            (if (= last-index index) ; double \r\n ends current run of headers
+                (case context
+                  ;; Parse URL data.
+                  ;; http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4
+                  (application/x-www-form-urlencoded
+                   (mapc (lambda (pair) (setcdr (last headers) (list pair)))
+                         (ews-parse-query-string
+                          (replace-regexp-in-string
+                           "\\+" " "
+                           (ews-trim (substring pending last-index)))))
+                   (throw 'finished-parsing-headers t))
+                  ;; Set custom delimiter for multipart form data.
+                  (multipart/form-data
+                   (setq delimiter (concat "\r\n--" boundary)))
+                  ;; No special context so we're done.
+                  (:otherwise (throw 'finished-parsing-headers t)))
+              (if (eql context 'multipart/form-data)
+                  (progn
+                    (setcdr (last headers)
+                            (list (ews-parse-multipart/form
+                                   (ews-trim
+                                    (substring pending last-index index)))))
+                    ;; Boundary suffixed by "--" indicates end of the headers.
+                    (when (and (> (length pending) (+ tmp 2))
+                               (string= (substring pending tmp (+ tmp 2)) "--"))
+                      (throw 'finished-parsing-headers t)))
+                ;; Standard header parsing.
+                (let ((header
+                       (ews-parse proc (substring pending last-index index))))
+                  ;; Content-Type indicates that the next double \r\n
+                  ;; will be followed by a special type of content which
+                  ;; will require special parsing.  Thus we will note
+                  ;; the type in the CONTEXT variable for parsing
+                  ;; dispatch above.
+                  (if (and (caar header) (eql (caar header) :CONTENT-TYPE))
+                      (cl-destructuring-bind (type &rest data)
+                          (mail-header-parse-content-type (cdar header))
+                        (setq boundary (cdr (assoc 'boundary data)))
+                        (setq context (intern (downcase type))))
+                    ;; All other headers are collected directly.
+                    (setcdr (last headers) header)))))
             (setq last-index tmp)))
         (setq leftover (ews-trim (substring pending last-index)))
         nil))))

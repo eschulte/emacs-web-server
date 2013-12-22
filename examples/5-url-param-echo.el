@@ -17,8 +17,7 @@
         (concat "URL Parameters:</br><table><tr>"
                 (mapconcat (lambda (pair)
                              (format "<th>%s</th><td>%s</td>"
-                                     (car pair)
-                                     (mapconcat #'identity (cdr pair) " ")))
+                                     (car pair) (cdr pair)))
                            (cl-remove-if-not (lambda (el) (stringp (car el)))
                                              request)
                            "</tr><tr>")
