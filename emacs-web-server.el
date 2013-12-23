@@ -189,7 +189,7 @@ deleted."
                   (multipart/form-data
                    (setq delimiter (concat "\r\n--" boundary)))
                   ;; No special context so we're done.
-                  (:otherwise (throw 'finished-parsing-headers t)))
+                  (t (throw 'finished-parsing-headers t)))
               (if (eql context 'multipart/form-data)
                   (progn
                     (setcdr (last headers)
