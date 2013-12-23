@@ -14,53 +14,57 @@
 (eval-when-compile (require 'cl))
 (require 'ert)
 
-(defun ews-test-run-asynch (continuation program &rest program-args)
-  (let* ((buffer (generate-new-buffer "*ews-test-run-asynch*"))
-         (proc (apply #'start-process "ews-test" buffer program program-args)))
-    (set-process-sentinel proc
-      (lexical-let ((cont continuation)
-                    (buf buffer))
-        (lambda (proc signal)
-          (when (memq (process-status proc) '(exit signal))
-            (funcall cont (prog1 (with-current-buffer buf
-                                   (buffer-string))
-                            (kill-buffer buf)))))))))
-
 (defvar ews-test-port 8999)
+
+(defun ews-test-curl-to-string (url &optional get-params post-params)
+  "Curl URL with optional parameters."
+  (async-shell-command
+   (format "curl -m 4 %s %s localhost:%s/%s"
+           (if get-params
+               (format "%s %S"
+                       (mapconcat (lambda (p) (format "%s=%s" (car p) (cdr p)))
+                                  get-params "&"))
+             "")
+           (if post-params
+               (mapconcat (lambda (p) (format "-s -F '%s=%s'" (car p) (cdr p)))
+                          post-params " ")
+             "")
+           ews-test-port url))
+  (unwind-protect
+      (with-current-buffer "*Async Shell Command*"
+        (while (get-buffer-process (current-buffer)) (sit-for 0.1))
+        (goto-char (point-min))
+        (buffer-string))
+    (kill-buffer "*Async Shell Command*")))
+
+(defmacro ews-test-with (handler &rest body)
+  (declare (indent 1))
+  (let ((srv (gensym)))
+    `(let* ((,srv (ews-start ,handler ews-test-port)))
+       (unwind-protect (progn ,@body) (ews-stop ,srv)))))
+(def-edebug-spec ews-test-with (form body))
 
 (ert-deftest ews/keyword-style-handler ()
   "Ensure that a simple keyword-style handler matches correctly."
-  (let ((handler (mapcar (lambda (letter)
+  (ews-test-with (mapcar (lambda (letter)
                            `((:GET . ,letter) .
                              (lambda (proc request)
                                (ews-response-header proc 200
                                  '("Content-type" . "text/plain"))
                                (process-send-string proc
                                  (concat "returned:" ,letter)))))
-                         '("a" "b"))))
-    (lexical-let ((server (ews-start handler ews-test-port)))
-      (ews-test-run-asynch
-       (lambda (response)
-         (should (string= response "returned:a"))
-         (ews-stop server))
-       "curl" "-s" (format "localhost:%d/a" ews-test-port)))))
+                         '("a" "b"))
+    (should (string= "returned:a" (ews-test-curl-to-string "a")))
+    (should (string= "returned:b" (ews-test-curl-to-string "b")))))
 
 (ert-deftest ews/function-style-handler ()
   "Test that a simple hello-world server responds."
-  (lexical-let
-      ((server
-        (ews-start
-         '(((lambda (_) t) .
-            (lambda (proc request)
-              (ews-response-header proc 200 '("Content-type" . "text/plain"))
-              (process-send-string proc "hello world")
-              :finished)))
-         ews-test-port)))
-    (ews-test-run-asynch
-     (lambda (response)
-       (should (string= response "hello world"))
-       (ews-stop server))
-     "curl" "-s" (format "localhost:%d" ews-test-port))))
+  (ews-test-with
+      '(((lambda (_) t) .
+         (lambda (proc request)
+           (ews-response-header proc 200 '("Content-type" . "text/plain"))
+           (process-send-string proc "hello world"))))
+    (should (string= (ews-test-curl-to-string "") "hello world"))))
 
 (ert-deftest ews/removed-from-ews-servers-after-stop ()
   (let ((start-length (length ews-servers)))
@@ -163,3 +167,5 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
 
 "))))
       (ews-stop server))))
+
+(provide 'emacs-web-server-test)
