@@ -1,14 +1,4 @@
 ;;; url-param-echo.el --- echo back url-paramed message using Emacs Web Server
-
-;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
-
-;; Author: Eric Schulte <schulte.eric@gmail.com>
-;; Keywords: http url-param
-;; License: GPLV3 (see the COPYING file in this directory)
-
-;;; Code:
-(require 'emacs-web-server)
-
 (ews-start
  '(((:GET . ".*") .
     (lambda (proc request)

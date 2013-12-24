@@ -1,14 +1,4 @@
 ;;; post-echo.el --- echo back posted message using Emacs Web Server
-
-;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
-
-;; Author: Eric Schulte <schulte.eric@gmail.com>
-;; Keywords: http post
-;; License: GPLV3 (see the COPYING file in this directory)
-
-;;; Code:
-(require 'emacs-web-server)
-
 (ews-start
  '(((:POST . ".*") .
     (lambda (proc request)
