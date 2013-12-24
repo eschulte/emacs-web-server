@@ -1,7 +1,14 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [5/8]
+* Tasks [5/9]
+** TODO Documentation [0/4]
+- [ ] introduction
+- [ ] handlers
+- [ ] request headers
+- [ ] usage examples
+- [ ] list of functions
+
 ** DONE Handle POST requests
 1. read standard for POST data
 2. parse multi-line headers with boundaries

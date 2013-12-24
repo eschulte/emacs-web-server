@@ -1,0 +1,107 @@
+\input texinfo
+@c @setfilename emacs-web-server.info
+@documentencoding utf-8
+@settitle Emacs Web Server (ews) User Manual
+
+@copying
+This file documents the Emacs Web Server (ews)
+
+Copyright (C) 2013 Eric Schulte <schulte.eric@@gmail.com>
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with the Invariant Section being ``GNU GENERAL PUBLIC LICENSE,''
+A copy of the license is included in the section entitled
+``GNU Free Documentation License.''
+@end quotation
+@end copying
+
+@dircategory Emacs misc features
+@direntry
+* Emacs Web Server: (ews).      Web Server for Emacs.
+@end direntry
+
+@titlepage
+@title Emacs Web Server (ews) User Manual
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@c Output the table of the contents at the beginning.
+@contents
+
+@ifnottex
+@node Top, Introduction, (dir), (dir)
+@top Emacs Web Server User Manual
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::                Getting to know the Emacs Web Server
+* Handlers::                    Handlers respond to HTTP requests
+* Request Headers::             Getting information on HTTP requests
+* Usage Examples::              Examples demonstrating usage
+* Function Index::              List of Functions
+
+Appendices
+
+* Copying::                     The GNU General Public License gives
+                                you permission to redistribute GNU Emacs on
+                                certain terms; it also explains that there is
+                                no warranty.
+* GNU Free Documentation License::  The license for this documentation.
+* Index::                       Complete index.
+
+
+
+
+@end menu
+
+@node Introduction, Handlers, Top, Top
+@chapter Introduction
+@cindex introduction
+
+This is the introduction.
+
+@node Handlers, Request Headers, Handlers, Top
+@chapter Handlers
+@cindex handlers
+
+A handler looks like this and does this.
+
+@node Request Headers, Usage Examples, Handlers, Top
+@chapter Request Headers
+@cindex request headers
+
+Request headers have this information.
+
+@node Usage Examples, Function Index, Request Headers, Top
+@chapter Usage Examples
+@cindex usage examples
+
+These examples demonstrate usage.
+
+@node Function Index, Copying, Usage Examples, Top
+@chapter Function Index
+@cindex function index
+
+These are the main functions one would use.
+
+@node Copying, GNU Free Documentation License, Function Index, Top
+@appendix GNU GENERAL PUBLIC LICENSE
+@include gpl.texi
+
+@node GNU Free Documentation License, Index, Copying, Top
+@appendix GNU Free Documentation License
+@include doclicense.texi
+
+@node Index,  , GNU Free Documentation License, Top
+@unnumbered Index
+
+@printindex cp
+
+@bye
