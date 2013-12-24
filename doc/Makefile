@@ -1,7 +1,9 @@
-%.info: %.texi
+all: info html
+
+info: emacs-web-server.texi
 	makeinfo $<
 
-%.html: %.texi
+html: emacs-web-server.texi
 	makeinfo --html $<
 
 clean:
