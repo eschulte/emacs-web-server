@@ -79,11 +79,45 @@ A handler looks like this and does this.
 
 Request headers have this information.
 
-@node Usage Examples, Function Index, Request Headers, Top
+@node Usage Examples, Hello World, Request Headers, Top
 @chapter Usage Examples
 @cindex usage examples
 
 These examples demonstrate usage.
+@menu
+* Hello World::                 Serve ``Hello World'' to every request
+* Hello World UTF8::            Serve ``Hello World'' w/UTF8 encoding
+* Hello World HTML::            Serve ``Hello World'' in HTML
+* File Server::                 Serve files from a document root
+* URL Parameter Echo::          Echo Parameters from a URL query string
+* POST Echo::                   Echo POST parameters back
+@end menu
+
+@node Hello World, Hello World UTF8, Usage Examples, Usage Examples
+@section Hello World
+@verbatiminclude ../examples/0-hello-world.el
+
+@node Hello World UTF8, Hello World HTML, Hello World, Usage Examples
+@section Hello World UTF8
+@verbatiminclude ../examples/1-hello-world-utf8.el
+
+@node Hello World HTML, File Server, Hello World UTF8, Usage Examples
+@section Hello World HTML
+@verbatiminclude ../examples/2-hello-world-html.el
+
+@node File Server, URL Parameter Echo, Hello World HTML, Usage Examples
+@section File Server
+@verbatiminclude ../examples/3-file-server.el
+
+@node URL Parameter Echo, POST Echo, File Server, Usage Examples
+@section URL Parameter Echo
+@verbatiminclude ../examples/4-url-param-echo.el
+
+@node POST Echo, Function Index, URL Parameter Echo, Usage Examples
+@section POST Echo
+POST parameters are used for example when HTML forms are submitted.
+
+@verbatiminclude ../examples/5-post-echo.el
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index
