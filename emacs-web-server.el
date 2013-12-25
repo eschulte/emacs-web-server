@@ -17,19 +17,20 @@
 
 (defclass ews-server ()
   ((handlers :initarg :handlers :accessor handlers :initform nil)
-   (process :initarg :process :accessor process :initform nil)
-   (port    :initarg :port    :accessor port    :initform nil)
-   (clients :initarg :clients :accessor clients :initform nil)))
+   (process  :initarg :process  :accessor process  :initform nil)
+   (port     :initarg :port     :accessor port     :initform nil)
+   (requests :initarg :requests :accessor requests :initform nil)))
 
-(defclass ews-client ()
-  ((leftover :initarg :leftover :accessor leftover :initform "")
+(defclass ews-request ()
+  ((process  :initarg :process  :accessor process  :initform nil)
+   (pending  :initarg :pending  :accessor pending  :initform "")
    (boundary :initarg :boundary :accessor boundary :initform nil)
    (headers  :initarg :headers  :accessor headers  :initform (list nil))))
 
 (defvar ews-servers nil
   "List holding all ews servers.")
 
-(defvar ews-time-format "%Y.%m.%d.%H.%M.%S.%N"
+(defvar ews-log-time-format "%Y.%m.%d.%H.%M.%S.%N"
   "Logging time format passed to `format-time-string'.")
 
 (defun ews-start (handlers port &optional log-buffer &rest network-args)
@@ -84,13 +85,13 @@ function.
            :plist (append (list :server server)
                           (when log (list :log-buffer log)))
            :log (when log
-                  (lambda (proc client message)
-                    (let ((c (process-contact client))
+                  (lambda (proc request message)
+                    (let ((c (process-contact request))
                           (buf (plist-get (process-plist proc) :log-buffer)))
                       (with-current-buffer buf
                         (goto-char (point-max))
                         (insert (format "%s\t%s\t%s\t%s"
-                                        (format-time-string ews-time-format)
+                                        (format-time-string ews-log-time-format)
                                         (first c) (second c) message))))))
            network-args))
     (push server ews-servers)
@@ -99,7 +100,7 @@ function.
 (defun ews-stop (server)
   "Stop SERVER."
   (setq ews-servers (remove server ews-servers))
-  (mapc #'delete-process (append (mapcar #'car (clients server))
+  (mapc #'delete-process (append (mapcar #'car (requests server))
                                  (list (process server)))))
 
 (defvar ews-http-common-methods '(GET HEAD POST PUT DELETE TRACE)
@@ -145,25 +146,25 @@ function.
             (ews-trim (substring string (match-end 0)))))))
 
 (defun ews-filter (proc string)
-  (with-slots (handlers clients) (plist-get (process-plist proc) :server)
-    (unless (assoc proc clients)
-      (push (cons proc (make-instance 'ews-client)) clients))
-    (let ((c (cdr (assoc proc clients))))
+  (with-slots (handlers requests) (plist-get (process-plist proc) :server)
+    (unless (cl-find-if (lambda (c) (equal proc (process c))) requests)
+      (push (make-instance 'ews-request :process proc) requests))
+    (let ((request (cl-find-if (lambda (c) (equal proc (process c))) requests)))
+      (with-slots (pending) request (setq pending (concat pending string)))
       (when (not (eq (catch 'close-connection
-                       (if (ews-parse-request proc c string)
-                           (ews-call-handler proc (cdr (headers c)) handlers)
-                         :keep-open))
+                       (if (ews-parse-request request string)
+                           (ews-call-handler request handlers)
+                           :keep-open))
                      :keep-open))
-        (setq clients (assq-delete-all proc clients))
+        (setq requests (cl-remove-if (lambda (r) (eql proc (process r))) requests))
         (delete-process proc)))))
 
-(defun ews-parse-request (proc client string)
-  "Parse request STRING from CLIENT with process PROC.
-Return non-nil only when parsing is complete and CLIENT may be
-deleted."
-  (with-slots (leftover boundary headers) client
-    (let ((pending (concat leftover string))
-          (delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
+(defun ews-parse-request (request string)
+  "Parse request STRING from REQUEST with process PROC.
+Return non-nil only when parsing is complete."
+  (with-slots (process pending boundary headers) request
+    (setq pending (concat pending string))
+    (let ((delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
           ;; Track progress through string, always work with the
           ;; section of string between LAST-INDEX and INDEX.
           (last-index 0) index
@@ -171,7 +172,7 @@ deleted."
           ;; custom parsing or nil for no special parsing.
           context)
       (catch 'finished-parsing-headers
-        ;; parse headers and append to client
+        ;; parse headers and append to request
         (while (setq index (string-match delimiter pending last-index))
           (let ((tmp (+ index (length delimiter))))
             (if (= last-index index) ; double \r\n ends current run of headers
@@ -201,8 +202,8 @@ deleted."
                                (string= (substring pending tmp (+ tmp 2)) "--"))
                       (throw 'finished-parsing-headers t)))
                 ;; Standard header parsing.
-                (let ((header
-                       (ews-parse proc (substring pending last-index index))))
+                (let ((header (ews-parse process (substring pending
+                                                            last-index index))))
                   ;; Content-Type indicates that the next double \r\n
                   ;; will be followed by a special type of content which
                   ;; will require special parsing.  Thus we will note
@@ -216,25 +217,27 @@ deleted."
                     ;; All other headers are collected directly.
                     (setcdr (last headers) header)))))
             (setq last-index tmp)))
-        (setq leftover (ews-trim (substring pending last-index)))
+        (setq pending (ews-trim (substring pending last-index)))
         nil))))
 
-(defun ews-call-handler (proc request handlers)
+ (defun ews-call-handler (request handlers)
   (catch 'matched-handler
     (mapc (lambda (handler)
             (let ((match (car handler))
                   (function (cdr handler)))
               (when (or (and (consp match)
-                             (assoc (car match) request)
+                             (assoc (car match) (headers request))
                              (string-match (cdr match)
-                                           (cdr (assoc (car match) request))))
+                                           (cdr (assoc (car match)
+                                                       (headers request)))))
                         (and (functionp match) (funcall match request)))
                 (throw 'matched-handler
-                       (condition-case e
-                           (funcall function proc request)
-                         (error (ews-error proc "Caught Error: %S" e)))))))
+                       (condition-case e (funcall function request)
+                         (error (ews-error (process request)
+                                           "Caught Error: %S" e)))))))
           handlers)
-    (ews-error proc "no handler matched request: %S" request)))
+    (ews-error (process request) "no handler matched request: %S"
+               (headers request))))
 
 (defun ews-error (proc msg &rest args)
   (let ((buf (plist-get (process-plist proc) :log-buffer))
@@ -243,23 +246,10 @@ deleted."
       (with-current-buffer buf
         (goto-char (point-max))
         (insert (format "%s\t%s\t%s\tEWS-ERROR: %s"
-                        (format-time-string ews-time-format)
+                        (format-time-string ews-log-time-format)
                         (first c) (second c)
                         (apply #'format msg args)))))
     (apply #'ews-send-500 proc msg args)))
-
-
-;;; Lazy request access functions
-(defun ews-get (item request)
-  "Get ITEM from Request.
-Perform any pending parsing of REQUEST until ITEM is found.  This
-is equivalent to calling (cdr (assoc ITEM (ews-alist REQUEST)))
-except that once ITEM is found no further parsing is performed."
-  )
-
-(defun ews-alist (request)
-  "Finish parsing REQUEST and return the resulting alist."
-  )
 
 
 ;;; Convenience functions to write responses

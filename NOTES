@@ -1,7 +1,7 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [6/9]
+* Tasks [7/9]
 ** TODO Documentation [0/4]
 - [ ] introduction
 - [ ] handlers
@@ -41,11 +41,19 @@ e.g., parameter strings
 - [X] function to send a file (with mime handling)
 - [X] send a 404 with some default text
 
-** TODO Lazy header processing
+** CANCELED Lazy header processing
+   - State "CANCELED"   from "TODO"       [2013-12-25 Wed 12:21] \\
+     premature optimization
 Use lazy sequence functions for header a-list to avoid parsing all
 headers.  For regexp matchers should stop when matched header is
 encountered (often the first one when :GET), For function matchers
 provide lazy version of assoc.
+
+Also, there is the issue of how a lazy request for more parameters
+should act before all incoming text has been received.  Emacs does not
+provide a light-weight mechanism for a function to wait for incoming
+process text without something gross like the =(sit-for 0.1)= used in
+the test suite.
 
 ** TODO use gnutls for https
 I think this should work.

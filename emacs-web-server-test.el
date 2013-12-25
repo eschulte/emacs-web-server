@@ -18,9 +18,8 @@
   (async-shell-command
    (format "curl -m 4 %s %s localhost:%s/%s"
            (if get-params
-               (format "%s %S"
-                       (mapconcat (lambda (p) (format "%s=%s" (car p) (cdr p)))
-                                  get-params "&"))
+               (mapconcat (lambda (p) (format "-d '%s=%s'" (car p) (cdr p)))
+                          get-params " ")
              "")
            (if post-params
                (mapconcat (lambda (p) (format "-s -F '%s=%s'" (car p) (cdr p)))
@@ -36,7 +35,7 @@
 
 (defmacro ews-test-with (handler &rest body)
   (declare (indent 1))
-  (let ((srv (gensym)))
+  (let ((srv (cl-gensym)))
     `(let* ((,srv (ews-start ,handler ews-test-port)))
        (unwind-protect (progn ,@body) (ews-stop ,srv)))))
 (def-edebug-spec ews-test-with (form body))
@@ -45,10 +44,10 @@
   "Ensure that a simple keyword-style handler matches correctly."
   (ews-test-with (mapcar (lambda (letter)
                            `((:GET . ,letter) .
-                             (lambda (proc request)
-                               (ews-response-header proc 200
+                             (lambda (request)
+                               (ews-response-header (process request) 200
                                  '("Content-type" . "text/plain"))
-                               (process-send-string proc
+                               (process-send-string (process request)
                                  (concat "returned:" ,letter)))))
                          '("a" "b"))
     (should (string= "returned:a" (ews-test-curl-to-string "a")))
@@ -58,9 +57,10 @@
   "Test that a simple hello-world server responds."
   (ews-test-with
       '(((lambda (_) t) .
-         (lambda (proc request)
-           (ews-response-header proc 200 '("Content-type" . "text/plain"))
-           (process-send-string proc "hello world"))))
+         (lambda (request)
+           (ews-response-header (process request) 200
+             '("Content-type" . "text/plain"))
+           (process-send-string (process request) "hello world"))))
     (should (string= (ews-test-curl-to-string "") "hello world"))))
 
 (ert-deftest ews/removed-from-ews-servers-after-stop ()
@@ -73,7 +73,7 @@
 (ert-deftest ews/parse-many-headers ()
   "Test that a number of headers parse successfully."
   (let ((server (ews-start nil ews-test-port))
-        (client (make-instance 'ews-client))
+        (request (make-instance 'ews-request))
         (header-string "GET / HTTP/1.1
 Host: localhost:7777
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -87,8 +87,8 @@ Connection: keep-alive
 "))
     (unwind-protect
         (progn
-          (ews-parse-request (process server) client header-string)
-          (let ((headers (cdr (headers client))))
+          (ews-parse-request request header-string)
+          (let ((headers (cdr (headers request))))
             (should (string= (cdr (assoc :ACCEPT-ENCODING headers))
                              "gzip, deflate"))
             (should (string= (cdr (assoc :GET headers)) "/"))
@@ -97,7 +97,7 @@ Connection: keep-alive
 
 (ert-deftest ews/parse-post-data ()
   (let ((server (ews-start nil ews-test-port))
-        (client (make-instance 'ews-client))
+        (request (make-instance 'ews-request))
         (header-string "POST / HTTP/1.1
 User-Agent: curl/7.33.0
 Host: localhost:8080
@@ -119,8 +119,8 @@ Content-Disposition: form-data; name=\"name\"
 "))
     (unwind-protect
         (progn
-          (ews-parse-request (process server) client header-string)
-          (let ((headers (cdr (headers client))))
+          (ews-parse-request request header-string)
+          (let ((headers (cdr (headers request))))
             (should (string= (cdr (assoc "name" headers))
                              "\"schulte\""))
             (should (string= (cdr (assoc "date" headers))
@@ -130,7 +130,7 @@ Content-Disposition: form-data; name=\"name\"
 (ert-deftest ews/parse-another-post-data ()
   "This one from an AJAX request."
   (let ((server (ews-start nil ews-test-port))
-        (client (make-instance 'ews-client))
+        (request (make-instance 'ews-request))
         (header-string "POST /complex.org HTTP/1.1
 Host: localhost:4444
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -150,8 +150,8 @@ Cache-Control: no-cache
 org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))
     (unwind-protect
         (progn
-          (ews-parse-request (process server) client header-string)
-          (let ((headers (cdr (headers client))))
+          (ews-parse-request request header-string)
+          (let ((headers (cdr (headers request))))
             (message "headers:%S" headers)
             (should (string= (cdr (assoc "path" headers)) "/complex.org"))
             (should (string= (cdr (assoc "beg" headers)) "646"))

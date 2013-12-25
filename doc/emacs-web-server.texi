@@ -43,7 +43,7 @@ A copy of the license is included in the section entitled
 @menu
 * Introduction::                Getting to know the Emacs Web Server
 * Handlers::                    Handlers respond to HTTP requests
-* Request Headers::             Getting information on HTTP requests
+* Request::                     Getting information on HTTP requests
 * Usage Examples::              Examples demonstrating usage
 * Function Index::              List of Functions
 
@@ -68,56 +68,63 @@ Appendices
 The Emacs Web Server is a Web server implemented in Emacs Lisp using
 Emacs network communication primitives.  HTTP requests are matched to
 handlers (@pxref{Handlers}) which are implemented as Emacs Lisp
-functions.  Handler functions receive the HTTP connection process and
-a request object (@pxref{Request Headers}) which holds information
-about the request.  Handlers write responses directly to the
-connection process.
+functions.  Handler functions receive a request object
+(@pxref{Request}) which holds information about the request and the
+HTTP connection process.  Handlers write their responses directly to
+the connection process.
 
 A number of examples (@pxref{Usage Examples}) demonstrate usage of the
-Emacs Web Server, as well as a complete list of the functions defining
-the interface (@pxref{Function Index}).
+Emacs Web Server.  Finally, the functions defining the interface are
+listed (@pxref{Function Index}).
 
-@node Handlers, Request Headers, Handlers, Top
+@node Handlers, Request, Handlers, Top
 @chapter Handlers
 @cindex handlers
 
-A handler looks like this and does this.
+The Emacs Web Server is started with the @code{ews-start} function
+which takes a ``handlers'' association list which is composed of pairs
+of matchers and handler functions.
 
-@node Request Headers, Usage Examples, Handlers, Top
-@chapter Request Headers
-@cindex request headers
-
-Information on requests is stored in a @code{request} object.  This object is
-used to decide which handler to call, and is passed to the called handler.
-Request objects hold information such as the type of request (@code{GET},
-@code{POST}, etc.), the path of the request, and any parameter information
-encoded in the request URL as form data.
-
-The request is received as a string which is parsed into an alist.
-This parsing is only performed as needed by a handler or as necessary
-to select a handler to call.  HTML Headers are keyed using uppercase
-keywords (e.g., @code{:GET}), and user supplied parameters are keyed
-using the string name of the parameter.  The following functions may
-be used to read request alists and cause any needed parsing to take
-place as a side effect.
-
-@defun ews-get item request
-@code{ews-get} returns the value associated with @code{item} in
-@code{request}.  Any pending parsing of the @code{request} is
-performed until @code{item} is found.
+@emph{Matchers} may be either a simple regular expression or a
+function.  A simple matcher consists of an HTTP header and a regular
+expression.  When the regular expression matches the content of that
+header the simple matcher succeeds and the associated handler is
+called.  For example the following matches any @code{GET} request
+whose path starts with the substring ``foo''.
 
 @example
-(ews-get :GET request)
-    @result{} "/"
-    ;; Effect: Only the first line of the request is parsed.
-(ews-get "foo" request)
-    @result{} "bar"
-    ;; Effect: Parameters are parsed until one named "foo" is
-    ;;         found or no more parameters are left.
+(:GET . "^foo")
 @end example
-@end defun
 
-@node Usage Examples, Hello World, Request Headers, Top
+A complex matcher is a function which takes the request object
+(@pxref{Request}) and succeeds when the function returns a non-nil
+value.  For example the following matcher matches every request
+
+@example
+(lambda (_) t)
+@end example
+
+and the following matches only requests in which the supplied
+``number'' parameter is odd.
+
+@example
+(lambda (request) (oddp (cdr (assoc "number" request))))
+@end example
+
+@node Request, Usage Examples, Handlers, Top
+@chapter Request
+@cindex request
+
+Information on requests is stored in a @code{request} object.  The
+request object is used to decide which handler to call, and is passed
+to the called handler.  This object holds information on the request
+including the request process, all HTTP headers, and parameters.
+
+The text of the request is parsed into an alist.  HTML Headers are
+keyed using uppercase keywords (e.g., @code{:GET}), and user supplied
+parameters are keyed using the string name of the parameter.
+
+@node Usage Examples, Hello World, Request, Top
 @chapter Usage Examples
 @cindex usage examples
 
@@ -161,7 +168,43 @@ POST parameters are used for example when HTML forms are submitted.
 @chapter Function Index
 @cindex function index
 
-These are the main functions one would use.
+The following functions implement the Emacs Web Server public API.
+
+To start and stop servers, use the following functions.
+
+@itemize
+@item ews-start
+@item ews-stop
+@end itemize
+
+All running servers are stored in the @code{ews-servers} variable.
+
+@itemize
+@item ews-servers
+@end itemize
+
+Each ews-server is an instance of the @code{ews-server} class.
+
+@itemize
+@item ews-server
+@end itemize
+
+Each request object is an instance of the @code{ews-client} class.
+
+@itemize
+@item ews-request
+@end itemize
+
+The following convenience functions automate many common tasks
+associated with responding to HTTP requests.
+
+@itemize
+@item ews-response-header
+@item ews-send-500
+@item ews-send-404
+@item ews-send-file
+@item ews-subdirectoryp
+@end itemize
 
 @node Copying, GNU Free Documentation License, Function Index, Top
 @appendix GNU GENERAL PUBLIC LICENSE
