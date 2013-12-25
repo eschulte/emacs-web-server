@@ -65,7 +65,17 @@ Appendices
 @chapter Introduction
 @cindex introduction
 
-This is the introduction.
+The Emacs Web Server is a Web server implemented in Emacs Lisp using
+Emacs network communication primitives.  HTTP requests are matched to
+handlers (@pxref{Handlers}) which are implemented as Emacs Lisp
+functions.  Handler functions receive the HTTP connection process and
+a request object (@pxref{Request Headers}) which holds information
+about the request.  Handlers write responses directly to the
+connection process.
+
+A number of examples (@pxref{Usage Examples}) demonstrate usage of the
+Emacs Web Server, as well as a complete list of the functions defining
+the interface (@pxref{Function Index}).
 
 @node Handlers, Request Headers, Handlers, Top
 @chapter Handlers
@@ -77,7 +87,35 @@ A handler looks like this and does this.
 @chapter Request Headers
 @cindex request headers
 
-Request headers have this information.
+Information on requests is stored in a @code{request} object.  This object is
+used to decide which handler to call, and is passed to the called handler.
+Request objects hold information such as the type of request (@code{GET},
+@code{POST}, etc.), the path of the request, and any parameter information
+encoded in the request URL as form data.
+
+The request is received as a string which is parsed into an alist.
+This parsing is only performed as needed by a handler or as necessary
+to select a handler to call.  HTML Headers are keyed using uppercase
+keywords (e.g., @code{:GET}), and user supplied parameters are keyed
+using the string name of the parameter.  The following functions may
+be used to read request alists and cause any needed parsing to take
+place as a side effect.
+
+@defun ews-get item request
+@code{ews-get} returns the value associated with @code{item} in
+@code{request}.  Any pending parsing of the @code{request} is
+performed until @code{item} is found.
+
+@example
+(ews-get :GET request)
+    @result{} "/"
+    ;; Effect: Only the first line of the request is parsed.
+(ews-get "foo" request)
+    @result{} "bar"
+    ;; Effect: Parameters are parsed until one named "foo" is
+    ;;         found or no more parameters are left.
+@end example
+@end defun
 
 @node Usage Examples, Hello World, Request Headers, Top
 @chapter Usage Examples

@@ -1,7 +1,7 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [5/9]
+* Tasks [6/9]
 ** TODO Documentation [0/4]
 - [ ] introduction
 - [ ] handlers
@@ -23,7 +23,7 @@ For now keep this all incremental and in ews-filter.
 ** DONE catch errors and return an error code
 include an easy error handler like the 404 handler
 
-** TODO better parsing of multipart form blocks
+** DONE better parsing of multipart form blocks
 parse more than just the content-type headers.
 
 ** DONE non-multipart form data

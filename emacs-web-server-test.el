@@ -5,9 +5,6 @@
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
 ;; License: GPLV3 (see the COPYING file in this directory)
 
-;; TODO: Allow running all tests at once, or just run tests in two
-;;       different Emacs instances.
-
 ;;; Code:
 (require 'emacs-web-server)
 (require 'cl-lib)

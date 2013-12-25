@@ -16,7 +16,7 @@
 (require 'cl-lib)
 
 (defclass ews-server ()
-  ((handler :initarg :handler :accessor handler :initform nil)
+  ((handlers :initarg :handlers :accessor handlers :initform nil)
    (process :initarg :process :accessor process :initform nil)
    (port    :initarg :port    :accessor port    :initform nil)
    (clients :initarg :clients :accessor clients :initform nil)))
@@ -32,10 +32,10 @@
 (defvar ews-time-format "%Y.%m.%d.%H.%M.%S.%N"
   "Logging time format passed to `format-time-string'.")
 
-(defun ews-start (handler port &optional log-buffer &rest network-args)
-  "Start a server using HANDLER and return the server object.
+(defun ews-start (handlers port &optional log-buffer &rest network-args)
+  "Start a server using HANDLERS and return the server object.
 
-HANDLER should be a list of cons of the form (MATCH . ACTION),
+HANDLERS should be a list of cons of the form (MATCH . ACTION),
 where MATCH is either a function (in which case it is called on
 the request object) or a cons cell of the form (KEYWORD . STRING)
 in which case STRING is matched against the value of the header
@@ -70,7 +70,7 @@ function.
    8080)
 
 "
-  (let ((server (make-instance 'ews-server :handler handler :port port))
+  (let ((server (make-instance 'ews-server :handlers handlers :port port))
         (log (when log-buffer (get-buffer-create log-buffer))))
     (setf (process server)
           (apply
@@ -145,13 +145,13 @@ function.
             (ews-trim (substring string (match-end 0)))))))
 
 (defun ews-filter (proc string)
-  (with-slots (handler clients) (plist-get (process-plist proc) :server)
+  (with-slots (handlers clients) (plist-get (process-plist proc) :server)
     (unless (assoc proc clients)
       (push (cons proc (make-instance 'ews-client)) clients))
     (let ((c (cdr (assoc proc clients))))
       (when (not (eq (catch 'close-connection
                        (if (ews-parse-request proc c string)
-                           (ews-call-handler proc (cdr (headers c)) handler)
+                           (ews-call-handler proc (cdr (headers c)) handlers)
                          :keep-open))
                      :keep-open))
         (setq clients (assq-delete-all proc clients))
@@ -219,7 +219,7 @@ deleted."
         (setq leftover (ews-trim (substring pending last-index)))
         nil))))
 
-(defun ews-call-handler (proc request handler)
+(defun ews-call-handler (proc request handlers)
   (catch 'matched-handler
     (mapc (lambda (handler)
             (let ((match (car handler))
@@ -233,7 +233,7 @@ deleted."
                        (condition-case e
                            (funcall function proc request)
                          (error (ews-error proc "Caught Error: %S" e)))))))
-          handler)
+          handlers)
     (ews-error proc "no handler matched request: %S" request)))
 
 (defun ews-error (proc msg &rest args)
@@ -247,6 +247,19 @@ deleted."
                         (first c) (second c)
                         (apply #'format msg args)))))
     (apply #'ews-send-500 proc msg args)))
+
+
+;;; Lazy request access functions
+(defun ews-get (item request)
+  "Get ITEM from Request.
+Perform any pending parsing of REQUEST until ITEM is found.  This
+is equivalent to calling (cdr (assoc ITEM (ews-alist REQUEST)))
+except that once ITEM is found no further parsing is performed."
+  )
+
+(defun ews-alist (request)
+  "Finish parsing REQUEST and return the resulting alist."
+  )
 
 
 ;;; Convenience functions to write responses
