@@ -9,6 +9,9 @@
 - [ ] usage examples
 - [ ] list of functions
 
+Notes to touch upon
+- [ ] how to set content type
+
 ** DONE Handle POST requests
 1. read standard for POST data
 2. parse multi-line headers with boundaries
