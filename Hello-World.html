@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This file documents the Emacs Web Server (ews)
+
+Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with the Invariant Section being "GNU GENERAL PUBLIC LICENSE,"
+A copy of the license is included in the section entitled
+"GNU Free Documentation License." -->
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Emacs Web Server (ews) User Manual: Hello World</title>
+
+<meta name="description" content="Emacs Web Server (ews) User Manual: Hello World">
+<meta name="keywords" content="Emacs Web Server (ews) User Manual: Hello World">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
+<link href="Hello-World-UTF8.html#Hello-World-UTF8" rel="next" title="Hello World UTF8">
+<link href="Usage-Examples.html#Usage-Examples" rel="prev" title="Usage Examples">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+<a name="Hello-World"></a>
+<div class="header">
+<p>
+Next: <a href="Hello-World-UTF8.html#Hello-World-UTF8" accesskey="n" rel="next">Hello World UTF8</a>, Previous: <a href="Usage-Examples.html#Usage-Examples" accesskey="p" rel="prev">Usage Examples</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Hello-World-1"></a>
+<h3 class="section">4.1 Hello World</h3>
+
+<p>The simplest possible &ldquo;hello world&rdquo; example.  The handler consists
+of a single (matcher . handler) pair.  The function matcher matches
+<em>every</em> incoming HTTP request.  The handler responds by setting
+the content type to <code>text/plain</code>, and then sending the string
+&ldquo;hello world&rdquo;.  When the handler exits the network connection of the
+request is closed.
+</p>
+<pre class="verbatim">;;; hello-world.el --- simple hello world server using Emacs Web Server
+(ews-start
+ '(((lambda (_) t) .
+    (lambda (request)
+      (with-slots (process headers) request
+        (ews-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+        (process-send-string process &quot;hello world&quot;)))))
+ 9000)
+</pre>
+
+
+
+</body>
+</html>
