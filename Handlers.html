@@ -24,7 +24,7 @@ A copy of the license is included in the section entitled
 <link href="Index.html#Index" rel="index" title="Index">
 <link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="index.html#Top" rel="up" title="Top">
-<link href="Request.html#Request" rel="next" title="Request">
+<link href="Requests.html#Requests" rel="next" title="Requests">
 <link href="Introduction.html#Introduction" rel="prev" title="Introduction">
 <style type="text/css">
 <!--
@@ -62,7 +62,7 @@ ul.no-bullet {list-style: none}
 <a name="Handlers"></a>
 <div class="header">
 <p>
-Next: <a href="Request.html#Request" accesskey="n" rel="next">Request</a>, Previous: <a href="#Handlers" accesskey="p" rel="prev">Handlers</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="Requests.html#Requests" accesskey="n" rel="next">Requests</a>, Previous: <a href="#Handlers" accesskey="p" rel="prev">Handlers</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
 </div>
 <hr>
 <a name="Handlers-1"></a>
@@ -76,6 +76,7 @@ association list composed of pairs of matchers and handler functions.
 </p>
 <a name="Matchers"></a>
 <h3 class="section">2.1 Matchers</h3>
+<a name="index-matchers"></a>
 
 <p>Matchers may be a regular expression or a function.  Regular
 expression matchers consists of an HTTP header and a regular
@@ -89,7 +90,7 @@ whose path starts with the substring &ldquo;foo&rdquo;.
 </pre></div>
 
 <p>A function matcher is a function which takes the request object
-(see <a href="Request.html#Request">Request</a>) and succeeds when the function returns a non-nil
+(see <a href="Requests.html#Requests">Requests</a>) and succeeds when the function returns a non-nil
 value.  For example the following matcher matches every request,
 </p>
 <div class="example">
@@ -104,11 +105,12 @@ value.  For example the following matcher matches every request,
   (oddp (string-to-number (cdr (assoc &quot;number&quot; request)))))
 </pre></div>
 
-<a name="Handler"></a>
-<h3 class="section">2.2 Handler</h3>
+<a name="Handler-Function"></a>
+<h3 class="section">2.2 Handler Function</h3>
+<a name="index-handler-function"></a>
 
 <p>Each handler is a function which takes a request object
-(see <a href="Request.html#Request">Request</a>) as its only argument.  The function may respond to
+(see <a href="Requests.html#Requests">Requests</a>) as its only argument.  The function may respond to
 the request by writing to the network process held in the
 <code>process</code> field of the request object.  For example, the
 <code>process-send-string</code> function may be used to write string data
@@ -121,6 +123,11 @@ to a request as in the following.
 <p>When the handler function exits the connection is terminated unless
 the handler function returns the keyword <code>:keep-alive</code>.
 </p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Requests.html#Requests" accesskey="n" rel="next">Requests</a>, Previous: <a href="#Handlers" accesskey="p" rel="prev">Handlers</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
 
 
 

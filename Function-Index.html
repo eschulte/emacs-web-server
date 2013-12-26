@@ -71,42 +71,126 @@ Next: <a href="Copying.html#Copying" accesskey="n" rel="next">Copying</a>, Previ
 
 <p>The following functions implement the Emacs Web Server public API.
 </p>
-<p>To start and stop servers, use the following functions.
+<a name="Objects"></a>
+<h3 class="section">5.1 Objects</h3>
+<p>The following objects represent web servers and requests.
 </p>
-<ul>
-<li> ews-start
-</li><li> ews-stop
-</li></ul>
+<a name="ews_002dserver"></a><dl>
+<dt><a name="index-ews_002dserver"></a>Class: <strong>ews-server</strong> <em>handlers process port requests</em></dt>
+<dd><p>Every Emacs web server is an instance of the <code>ews-server</code> class.
+Each instance includes the <code>handlers</code> association list and
+<code>port</code> passed to <code>ews-start</code>, as well as the server network
+<code>process</code> and a list of all active <code>requests</code>.
+</p></dd></dl>
 
-<p>All running servers are stored in the <code>ews-servers</code> variable.
+<a name="ews_002drequest"></a><dl>
+<dt><a name="index-ews_002drequest"></a>Class: <strong>ews-request</strong> <em>process pending context boundary headers</em></dt>
+<dd><p>The <code>ews-request</code> class represents an active web request.  The
+<code>process</code> field holds the network process of the client machine
+and may be used by handlers to respond to requests.  The
+<code>headers</code> field holds an alist of information on the request for
+use by handlers.  The remaining <code>pending</code>, <code>context</code> and
+<code>boundary</code> fields are used to maintain header parsing information
+across calls to the <code>ews-filter</code> function.
+</p></dd></dl>
+
+<a name="Starting-and-Stopping-Servers"></a>
+<h3 class="section">5.2 Starting and Stopping Servers</h3>
+<a name="index-start-and-stop"></a>
+<p>The following functions start and stop Emacs web servers.  The
+<code>ews-servers</code> list holds all running servers.
 </p>
-<ul>
-<li> ews-servers
-</li></ul>
+<a name="ews_002dstart"></a><dl>
+<dt><a name="index-ews_002dstart"></a>Function: <strong>ews-start</strong> <em>handlers port &amp;optional log-buffer &amp;rest network-args</em></dt>
+<dd><p><code>ews-start</code> starts a server listening on <code>port</code> using
+<code>handlers</code> (see <a href="Handlers.html#Handlers">Handlers</a>) to match and respond to requests.
+An instance of the <code>ews-server</code> class is returned.
+</p></dd></dl>
 
-<p>Each ews-server is an instance of the <code>ews-server</code> class.
-</p>
-<ul>
-<li> ews-server
-</li></ul>
+<a name="ews_002dservers"></a><dl>
+<dt><a name="index-ews_002dservers"></a>Variable: <strong>ews-servers</strong></dt>
+<dd><p>The <code>ews-servers</code> list holds all active Emacs web servers.
+</p></dd></dl>
 
-<p>Each request object is an instance of the <code>ews-client</code> class.
-</p>
-<ul>
-<li> ews-request
-</li></ul>
+<a name="ews_002dstop"></a><dl>
+<dt><a name="index-ews_002dstop"></a>Function: <strong>ews-stop</strong> <em>server</em></dt>
+<dd><p><code>ews-stop</code> stops <code>server</code> deletes all related processes, and
+frees the server&rsquo;s port.  Evaluate the following to stop all emacs web
+servers.
+</p><div class="example">
+<pre class="example">(mapc #'ews-stop ews-servers)
+</pre></div>
+</dd></dl>
 
+<a name="Convenience-Functions"></a>
+<h3 class="section">5.3 Convenience Functions</h3>
 <p>The following convenience functions automate many common tasks
 associated with responding to HTTP requests.
 </p>
-<ul>
-<li> ews-response-header
-</li><li> ews-send-500
-</li><li> ews-send-404
-</li><li> ews-send-file
-</li><li> ews-subdirectoryp
-</li></ul>
+<a name="ews_002dresponse_002dheader"></a><a name="index-content-type"></a>
+<dl>
+<dt><a name="index-ews_002dresponse_002dheader"></a>Function: <strong>ews-response-header</strong> <em>process code &amp;rest header</em></dt>
+<dd><p>Send the headers required to start an HTTP response to <code>process</code>.
+<code>process</code> should be a <code>ews-request</code> <code>process</code> of an
+active request.  For example start a standard 200 &ldquo;OK&rdquo; HTML response
+with the following.
+</p>
+<div class="example">
+<pre class="example">(ews-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
+</pre></div>
 
+<p>The encoding may optionally be set in the HTTP header.  Send a UTF8
+encoded response with the following.
+</p>
+<div class="example">
+<pre class="example">(ews-response-header process 200
+            '(&quot;Content-type&quot; . &quot;text/plain; charset=utf-8&quot;))
+</pre></div>
+
+</dd></dl>
+
+<a name="ews_002dsend_002d500"></a><dl>
+<dt><a name="index-ews_002dsend_002d500"></a>Function: <strong>ews-send-500</strong> <em>process &amp;rest msg-and-args</em></dt>
+<dd><p><code>ews-send-500</code> sends a default 500 &ldquo;Internal Server Error&rdquo;
+response to <code>process</code>.
+</p></dd></dl>
+
+<a name="ews_002dsend_002d404"></a><dl>
+<dt><a name="index-ews_002dsend_002d404"></a>Function: <strong>ews-send-404</strong> <em>process &amp;rest msg-and-args</em></dt>
+<dd><p><code>ews-send-500</code> sends a default 404 &ldquo;File Not Found&rdquo; response to
+<code>process</code>.
+</p></dd></dl>
+
+<a name="ews_002dsend_002dfile"></a><dl>
+<dt><a name="index-ews_002dsend_002dfile"></a>Function: <strong>ews-send-file</strong> <em>process path &amp;optional mime-type</em></dt>
+<dd><p><code>ews-send-file</code> sends the file located at <code>path</code> to
+<code>process</code>.  If the optional <code>mime-type</code> is not set, then the
+mime-type is determined by calling <code>mm-default-file-encoding</code> on
+<code>path</code> or is set to &ldquo;application/octet-stream&rdquo; if no mime-type
+can be determined.
+</p></dd></dl>
+
+<a name="ews_002din_002ddirectory_002dp"></a><dl>
+<dt><a name="index-ews_002din_002ddirectory_002dp"></a>Function: <strong>ews-in-directory-p</strong> <em>parent path</em></dt>
+<dd><p>Check if <code>path</code> is under the <code>parent</code> directory.
+</p>
+<div class="example">
+<pre class="example">(ews-in-directory-p &quot;/tmp/&quot; &quot;pics&quot;)
+    &rArr; &quot;/tmp/pics&quot;
+
+(ews-in-directory-p &quot;/tmp/&quot; &quot;..&quot;)
+    &rArr; nil
+
+(ews-in-directory-p &quot;/tmp/&quot; &quot;~/pics&quot;)
+    &rArr; nil
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="Copying.html#Copying" accesskey="n" rel="next">Copying</a>, Previous: <a href="Usage-Examples.html#Usage-Examples" accesskey="p" rel="prev">Usage Examples</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
 
 
 
