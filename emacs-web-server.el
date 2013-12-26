@@ -24,6 +24,7 @@
 (defclass ews-request ()
   ((process  :initarg :process  :accessor process  :initform nil)
    (pending  :initarg :pending  :accessor pending  :initform "")
+   (context  :initarg :context  :accessor context  :initform nil)
    (boundary :initarg :boundary :accessor boundary :initform nil)
    (headers  :initarg :headers  :accessor headers  :initform (list nil))))
 
@@ -162,15 +163,12 @@ function.
 (defun ews-parse-request (request string)
   "Parse request STRING from REQUEST with process PROC.
 Return non-nil only when parsing is complete."
-  (with-slots (process pending boundary headers) request
+  (with-slots (process pending context boundary headers) request
     (setq pending (concat pending string))
     (let ((delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
           ;; Track progress through string, always work with the
           ;; section of string between LAST-INDEX and INDEX.
-          (last-index 0) index
-          ;; Current context, either a particular content-type for
-          ;; custom parsing or nil for no special parsing.
-          context)
+          (last-index 0) index)
       (catch 'finished-parsing-headers
         ;; parse headers and append to request
         (while (setq index (string-match delimiter pending last-index))

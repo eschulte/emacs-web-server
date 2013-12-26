@@ -1,7 +1,11 @@
 ;;; file-server.el --- serve any files using Emacs Web Server
-;; This example uses absolute paths and will try to serve files from
-;; the root of the file-system, so don't run it on a public server.
-(ews-start
- '(((:GET . ".*") .
-    (lambda (proc request) (ews-send-file proc (cdr (assoc :GET request))))))
- 9004)
+(lexical-let ((docroot default-directory))
+  (ews-start
+   (list (cons (cons :GET ".*")
+               (lambda (request)
+                 (with-slots (process headers) request
+                   (let ((path (substring (cdr (assoc :GET headers)) 1)))
+                     (if (ews-subdirectoryp docroot path)
+                         (ews-send-file process (expand-file-name path docroot))
+                       (ews-send-404 process)))))))
+   9004))

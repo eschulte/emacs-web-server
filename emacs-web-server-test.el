@@ -165,4 +165,18 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
 "))))
       (ews-stop server))))
 
+(ert-deftest ews/simple-post ()
+  "Test a simple POST server."
+  (ews-test-with
+      '(((:POST . ".*") .
+         (lambda (request)
+           (with-slots (process headers) request
+             (let ((message (cdr (assoc "message" headers))))
+               (ews-response-header process 200
+                 '("Content-type" . "text/plain"))
+               (process-send-string process
+                 (format "you said %S\n" message)))))))
+    (should (string= (ews-test-curl-to-string "" nil '(("message" . "foo")))
+                     "you said \"foo\"\n"))))
+
 (provide 'emacs-web-server-test)

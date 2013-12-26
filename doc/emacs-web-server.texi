@@ -41,7 +41,7 @@ A copy of the license is included in the section entitled
 @end ifnottex
 
 @menu
-* Introduction::                Getting to know the Emacs Web Server
+* Introduction::                Overview of the Emacs Web Server
 * Handlers::                    Handlers respond to HTTP requests
 * Request::                     Getting information on HTTP requests
 * Usage Examples::              Examples demonstrating usage
@@ -65,30 +65,32 @@ Appendices
 @chapter Introduction
 @cindex introduction
 
-The Emacs Web Server is a Web server implemented in Emacs Lisp using
-Emacs network communication primitives.  HTTP requests are matched to
-handlers (@pxref{Handlers}) which are implemented as Emacs Lisp
-functions.  Handler functions receive a request object
-(@pxref{Request}) which holds information about the request and the
-HTTP connection process.  Handlers write their responses directly to
-the connection process.
+The Emacs Web Server is a Web server implemented entirely in Emacs
+Lisp.  HTTP requests are matched to handlers (@pxref{Handlers}) which
+are Emacs Lisp functions.  Handlers receive as their only argument a
+request object (@pxref{Request}) which holds information about the
+request and the process holding HTTP network connection.  Handlers
+write their responses directly to the network process.
 
 A number of examples (@pxref{Usage Examples}) demonstrate usage of the
-Emacs Web Server.  Finally, the functions defining the interface are
+Emacs Web Server.  All public functions of the Emacs Web Server are
 listed (@pxref{Function Index}).
 
 @node Handlers, Request, Handlers, Top
 @chapter Handlers
 @cindex handlers
 
-The Emacs Web Server is started with the @code{ews-start} function
-which takes a ``handlers'' association list which is composed of pairs
-of matchers and handler functions.
+The function @code{ews-start} takes takes two arguments
+@code{handlers} and @code{port}.  It starts a server listening on
+@code{port} responding to requests with @code{handlers}, an
+association list composed of pairs of matchers and handler functions.
 
-@emph{Matchers} may be either a simple regular expression or a
-function.  A simple matcher consists of an HTTP header and a regular
-expression.  When the regular expression matches the content of that
-header the simple matcher succeeds and the associated handler is
+@section Matchers
+
+Matchers may be a regular expression or a function.  Regular
+expression matchers consists of an HTTP header and a regular
+expression.  When the regular expression matches the content of the
+given header the matcher succeeds and the associated handler is
 called.  For example the following matches any @code{GET} request
 whose path starts with the substring ``foo''.
 
@@ -96,9 +98,9 @@ whose path starts with the substring ``foo''.
 (:GET . "^foo")
 @end example
 
-A complex matcher is a function which takes the request object
+A function matcher is a function which takes the request object
 (@pxref{Request}) and succeeds when the function returns a non-nil
-value.  For example the following matcher matches every request
+value.  For example the following matcher matches every request,
 
 @example
 (lambda (_) t)
@@ -108,17 +110,34 @@ and the following matches only requests in which the supplied
 ``number'' parameter is odd.
 
 @example
-(lambda (request) (oddp (cdr (assoc "number" request))))
+(lambda (request)
+  (oddp (string-to-number (cdr (assoc "number" request)))))
 @end example
+
+@section Handler
+
+Each handler is a function which takes a request object
+(@pxref{Request}) as its only argument.  The function may respond to
+the request by writing to the network process held in the
+@code{process} field of the request object.  For example, the
+@code{process-send-string} function may be used to write string data
+to a request as in the following.
+
+@example
+  (process-send-string (process request) "hello world")
+@end example
+
+When the handler function exits the connection is terminated unless
+the handler function returns the keyword @code{:keep-alive}.
 
 @node Request, Usage Examples, Handlers, Top
 @chapter Request
 @cindex request
 
-Information on requests is stored in a @code{request} object.  The
+Each HTTP requests is represented using a @code{request} object.  The
 request object is used to decide which handler to call, and is passed
-to the called handler.  This object holds information on the request
-including the request process, all HTTP headers, and parameters.
+as an argument to the called handler.  The request object holds the
+network process, all HTTP headers, and any parameters.
 
 The text of the request is parsed into an alist.  HTML Headers are
 keyed using uppercase keywords (e.g., @code{:GET}), and user supplied
@@ -140,27 +159,67 @@ These examples demonstrate usage.
 
 @node Hello World, Hello World UTF8, Usage Examples, Usage Examples
 @section Hello World
+
+The simplest possible ``hello world'' example.  The handler consists
+of a single (matcher . handler) pair.  The function matcher matches
+@emph{every} incoming HTTP request.  The handler responds by setting
+the content type to @code{text/plain}, and then sending the string
+``hello world''.  When the handler exits the network connection of the
+request is closed.
+
 @verbatiminclude ../examples/0-hello-world.el
 
 @node Hello World UTF8, Hello World HTML, Hello World, Usage Examples
 @section Hello World UTF8
+
+This example only differs from the previous in that the
+``Content-type'' indicates UTF8 encoded data, and the hello world sent
+is selected at random from a list of different languages.
+
 @verbatiminclude ../examples/1-hello-world-utf8.el
 
 @node Hello World HTML, File Server, Hello World UTF8, Usage Examples
 @section Hello World HTML
 @verbatiminclude ../examples/2-hello-world-html.el
 
+This variation of the ``hello world'' example sends a @code{text/html}
+response instead of a simple @code{text/plain} response.
+
 @node File Server, URL Parameter Echo, Hello World HTML, Usage Examples
 @section File Server
+
+The following example implements a file server which will serve files
+from the @code{docroot} document root set to the current working
+directory in this example.  Three helper functions are used;
+@code{ews-subdirectoryp} is used to check if the requested path is
+within the document root, if so the file is served and
+@code{ews-send-file} is used to appropriately set the mime-type of the
+response based on the extension of the file, if not then
+@code{ews-send-404} is used to send a default ``File Not Found''
+response.
+
 @verbatiminclude ../examples/3-file-server.el
 
 @node URL Parameter Echo, POST Echo, File Server, Usage Examples
 @section URL Parameter Echo
+
+This example demonstrates access of URL-encoded parameters in a
+@code{GET} request.  For example the following URL
+@url{http://localhost:9005/example?foo=bar&baz=qux} will render as an
+the following HTML table.
+
+@multitable @columnfractions .5 .5
+@item foo @tab bar
+@item baz @tab qux
+@end multitable
+
 @verbatiminclude ../examples/4-url-param-echo.el
 
 @node POST Echo, Function Index, URL Parameter Echo, Usage Examples
 @section POST Echo
-POST parameters are used for example when HTML forms are submitted.
+
+The following example echos back the content of the ``message'' field
+in a @code{POST} request.
 
 @verbatiminclude ../examples/5-post-echo.el
 
