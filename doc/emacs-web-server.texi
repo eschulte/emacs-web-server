@@ -43,7 +43,7 @@ A copy of the license is included in the section entitled
 @menu
 * Introduction::                Overview of the Emacs Web Server
 * Handlers::                    Handlers respond to HTTP requests
-* Request::                     Getting information on HTTP requests
+* Requests::                     Getting information on HTTP requests
 * Usage Examples::              Examples demonstrating usage
 * Function Index::              List of Functions
 
@@ -68,7 +68,7 @@ Appendices
 The Emacs Web Server is a Web server implemented entirely in Emacs
 Lisp.  HTTP requests are matched to handlers (@pxref{Handlers}) which
 are Emacs Lisp functions.  Handlers receive as their only argument a
-request object (@pxref{Request}) which holds information about the
+request object (@pxref{Requests}) which holds information about the
 request and the process holding HTTP network connection.  Handlers
 write their responses directly to the network process.
 
@@ -76,7 +76,7 @@ A number of examples (@pxref{Usage Examples}) demonstrate usage of the
 Emacs Web Server.  All public functions of the Emacs Web Server are
 listed (@pxref{Function Index}).
 
-@node Handlers, Request, Handlers, Top
+@node Handlers, Requests, Handlers, Top
 @chapter Handlers
 @cindex handlers
 
@@ -86,6 +86,7 @@ The function @code{ews-start} takes takes two arguments
 association list composed of pairs of matchers and handler functions.
 
 @section Matchers
+@cindex matchers
 
 Matchers may be a regular expression or a function.  Regular
 expression matchers consists of an HTTP header and a regular
@@ -99,7 +100,7 @@ whose path starts with the substring ``foo''.
 @end example
 
 A function matcher is a function which takes the request object
-(@pxref{Request}) and succeeds when the function returns a non-nil
+(@pxref{Requests}) and succeeds when the function returns a non-nil
 value.  For example the following matcher matches every request,
 
 @example
@@ -114,10 +115,11 @@ and the following matches only requests in which the supplied
   (oddp (string-to-number (cdr (assoc "number" request)))))
 @end example
 
-@section Handler
+@section Handler Function
+@cindex handler function
 
 Each handler is a function which takes a request object
-(@pxref{Request}) as its only argument.  The function may respond to
+(@pxref{Requests}) as its only argument.  The function may respond to
 the request by writing to the network process held in the
 @code{process} field of the request object.  For example, the
 @code{process-send-string} function may be used to write string data
@@ -130,20 +132,21 @@ to a request as in the following.
 When the handler function exits the connection is terminated unless
 the handler function returns the keyword @code{:keep-alive}.
 
-@node Request, Usage Examples, Handlers, Top
-@chapter Request
-@cindex request
+@node Requests, Usage Examples, Handlers, Top
+@chapter Requests
+@cindex requests
 
-Each HTTP requests is represented using a @code{request} object.  The
-request object is used to decide which handler to call, and is passed
-as an argument to the called handler.  The request object holds the
-network process, all HTTP headers, and any parameters.
+Each HTTP requests is represented using an @code{ews-request} object
+(@pxref{ews-request}).  The request object is used to decide which
+handler to call, and is passed as an argument to the called handler.
+The request object holds the network process, all HTTP headers, and
+any parameters.
 
 The text of the request is parsed into an alist.  HTML Headers are
 keyed using uppercase keywords (e.g., @code{:GET}), and user supplied
 parameters are keyed using the string name of the parameter.
 
-@node Usage Examples, Hello World, Request, Top
+@node Usage Examples, Hello World, Requests, Top
 @chapter Usage Examples
 @cindex usage examples
 
@@ -229,41 +232,117 @@ in a @code{POST} request.
 
 The following functions implement the Emacs Web Server public API.
 
-To start and stop servers, use the following functions.
+@section Objects
+The following objects represent web servers and requests.
 
-@itemize
-@item ews-start
-@item ews-stop
-@end itemize
+@anchor{ews-server}
+@deftp Class ews-server handlers process port requests
+Every Emacs web server is an instance of the @code{ews-server} class.
+Each instance includes the @code{handlers} association list and
+@code{port} passed to @code{ews-start}, as well as the server network
+@code{process} and a list of all active @code{requests}.
+@end deftp
 
-All running servers are stored in the @code{ews-servers} variable.
+@anchor{ews-request}
+@deftp Class ews-request process pending context boundary headers
+The @code{ews-request} class represents an active web request.  The
+@code{process} field holds the network process of the client machine
+and may be used by handlers to respond to requests.  The
+@code{headers} field holds an alist of information on the request for
+use by handlers.  The remaining @code{pending}, @code{context} and
+@code{boundary} fields are used to maintain header parsing information
+across calls to the @code{ews-filter} function.
+@end deftp
 
-@itemize
-@item ews-servers
-@end itemize
+@section Starting and Stopping Servers
+@cindex start and stop
+The following functions start and stop Emacs web servers.  The
+@code{ews-servers} list holds all running servers.
 
-Each ews-server is an instance of the @code{ews-server} class.
+@anchor{ews-start}
+@defun ews-start handlers port &optional log-buffer &rest network-args
+@code{ews-start} starts a server listening on @code{port} using
+@code{handlers} (@pxref{Handlers}) to match and respond to requests.
+An instance of the @code{ews-server} class is returned.
+@end defun
 
-@itemize
-@item ews-server
-@end itemize
+@anchor{ews-servers}
+@defvar ews-servers
+The @code{ews-servers} list holds all active Emacs web servers.
+@end defvar
 
-Each request object is an instance of the @code{ews-client} class.
+@anchor{ews-stop}
+@defun ews-stop server
+@code{ews-stop} stops @code{server} deletes all related processes, and
+frees the server's port.  Evaluate the following to stop all emacs web
+servers.
+@example
+(mapc #'ews-stop ews-servers)
+@end example
+@end defun
 
-@itemize
-@item ews-request
-@end itemize
-
+@section Convenience Functions
 The following convenience functions automate many common tasks
 associated with responding to HTTP requests.
 
-@itemize
-@item ews-response-header
-@item ews-send-500
-@item ews-send-404
-@item ews-send-file
-@item ews-subdirectoryp
-@end itemize
+@anchor{ews-response-header}
+@cindex content type
+@defun ews-response-header process code &rest header
+Send the headers required to start an HTTP response to @code{process}.
+@code{process} should be a @code{ews-request} @code{process} of an
+active request.  For example start a standard 200 ``OK'' HTML response
+with the following.
+
+@example
+(ews-response-header process 200 '("Content-type" . "text/html"))
+@end example
+
+The encoding may optionally be set in the HTTP header.  Send a UTF8
+encoded response with the following.
+
+@example
+(ews-response-header process 200
+            '("Content-type" . "text/plain; charset=utf-8"))
+@end example
+
+@end defun
+
+@anchor{ews-send-500}
+@defun ews-send-500 process &rest msg-and-args
+@code{ews-send-500} sends a default 500 ``Internal Server Error''
+response to @code{process}.
+@end defun
+
+@anchor{ews-send-404}
+@defun ews-send-404 process &rest msg-and-args
+@code{ews-send-500} sends a default 404 ``File Not Found'' response to
+@code{process}.
+@end defun
+
+@anchor{ews-send-file}
+@defun ews-send-file process path &optional mime-type
+@code{ews-send-file} sends the file located at @code{path} to
+@code{process}.  If the optional @code{mime-type} is not set, then the
+mime-type is determined by calling @code{mm-default-file-encoding} on
+@code{path} or is set to ``application/octet-stream'' if no mime-type
+can be determined.
+@end defun
+
+@anchor{ews-in-directory-p}
+@defun ews-in-directory-p parent path
+Check if @code{path} is under the @code{parent} directory.
+
+@example
+(ews-in-directory-p "/tmp/" "pics")
+    @result{} "/tmp/pics"
+
+(ews-in-directory-p "/tmp/" "..")
+    @result{} nil
+
+(ews-in-directory-p "/tmp/" "~/pics")
+    @result{} nil
+@end example
+@end defun
 
 @node Copying, GNU Free Documentation License, Function Index, Top
 @appendix GNU GENERAL PUBLIC LICENSE
@@ -276,6 +355,11 @@ associated with responding to HTTP requests.
 @node Index,  , GNU Free Documentation License, Top
 @unnumbered Index
 
+@c Combine all index (function variable type and concept) types into a
+@c single index.
+@syncodeindex fn cp
+@syncodeindex vr cp
+@syncodeindex tp cp
 @printindex cp
 
 @bye

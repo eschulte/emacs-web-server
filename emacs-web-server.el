@@ -293,16 +293,13 @@ Optionally explicitly set MIME-TYPE, otherwise it is guessed by
         (insert-file-contents-literally path)
         (buffer-string)))))
 
-(defun ews-subdirectoryp (parent path)
-  "Check that PATH is a subdirectory of PARENT.
+(defun ews-in-directory-p (parent path)
+  "Check if PATH is under the PARENT directory.
 If so return PATH, if not return nil."
-  (let* ((expanded (expand-file-name path))
-         (complete (if (string= (substring expanded -1) "/")
-                       expanded
-                     (concat expanded "/"))))
-    (and (>= (length complete) (length parent))
-         (string= parent (substring complete 0 (length parent)))
-         complete)))
+  (let ((expanded (expand-file-name path parent)))
+    (and (>= (length expanded) (length parent))
+         (string= parent (substring expanded 0 (length parent)))
+         expanded)))
 
 (provide 'emacs-web-server)
 ;;; emacs-web-server.el ends here
