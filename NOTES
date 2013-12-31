@@ -1,16 +1,16 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [7/9]
-** STARTED Documentation [0/4]
-- [ ] introduction
-- [ ] handlers
-- [ ] request headers
-- [ ] usage examples
-- [ ] list of functions
+* Tasks [8/9]
+** DONE Documentation [6/6]
+- [X] introduction
+- [X] handlers
+- [X] request headers
+- [X] usage examples
+- [X] list of functions
 
 Notes to touch upon
-- [ ] how to set content type
+- [X] how to set content type
 
 ** DONE Handle POST requests
 1. read standard for POST data
@@ -57,13 +57,3 @@ the test suite.
 
 ** TODO use gnutls for https
 I think this should work.
-* Documentation
-** Writing Handlers
-*** Matching
-*** Handler Functions
-At any time one can throw =close-connection= to abort the handler and
-close the conncetion.  If the keyword =:keep-open= is thrown, then the
-handler aborts, but the connection isn't closed.
-
-A return value of =:keep-open= will keep the connection open,
-otherwise it is closed when the handler returns.
