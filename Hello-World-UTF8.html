@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This file documents the Emacs Web Server (ews)
+<!-- This file documents the Emacs Web Server (ws)
 
 Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
@@ -12,10 +12,10 @@ A copy of the license is included in the section entitled
 "GNU Free Documentation License." -->
 <!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Emacs Web Server (ews) User Manual: Hello World UTF8</title>
+<title>Emacs Web Server (ws) User Manual: Hello World UTF8</title>
 
-<meta name="description" content="Emacs Web Server (ews) User Manual: Hello World UTF8">
-<meta name="keywords" content="Emacs Web Server (ews) User Manual: Hello World UTF8">
+<meta name="description" content="Emacs Web Server (ws) User Manual: Hello World UTF8">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Hello World UTF8">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -73,7 +73,7 @@ Next: <a href="Hello-World-HTML.html#Hello-World-HTML" accesskey="n" rel="next">
 is selected at random from a list of different languages.
 </p>
 <pre class="verbatim">;;; hello-world-utf8.el --- utf8 hello world server using Emacs Web Server
-(ews-start
+(ws-start
  '(((lambda (_) t) .
     (lambda (request)
       (with-slots (process headers) request
@@ -88,7 +88,7 @@ is selected at random from a list of different languages.
                         &quot;გამარჯობა&quot;
                         &quot;नमस्ते&quot;
                         &quot;你好&quot;)))
-          (ews-response-header process 200
+          (ws-response-header process 200
             '(&quot;Content-type&quot; . &quot;text/plain; charset=utf-8&quot;))
           (process-send-string process
             (concat (nth (random (length hellos)) hellos) &quot; world&quot;)))))))

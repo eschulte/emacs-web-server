@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This file documents the Emacs Web Server (ews)
+<!-- This file documents the Emacs Web Server (ws)
 
 Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
@@ -12,10 +12,10 @@ A copy of the license is included in the section entitled
 "GNU Free Documentation License." -->
 <!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Emacs Web Server (ews) User Manual: Hello World</title>
+<title>Emacs Web Server (ws) User Manual: Hello World</title>
 
-<meta name="description" content="Emacs Web Server (ews) User Manual: Hello World">
-<meta name="keywords" content="Emacs Web Server (ews) User Manual: Hello World">
+<meta name="description" content="Emacs Web Server (ws) User Manual: Hello World">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Hello World">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -76,11 +76,11 @@ the content type to <code>text/plain</code>, and then sending the string
 request is closed.
 </p>
 <pre class="verbatim">;;; hello-world.el --- simple hello world server using Emacs Web Server
-(ews-start
+(ws-start
  '(((lambda (_) t) .
     (lambda (request)
       (with-slots (process headers) request
-        (ews-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+        (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
         (process-send-string process &quot;hello world&quot;)))))
  9000)
 </pre>

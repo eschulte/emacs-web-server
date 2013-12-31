@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This file documents the Emacs Web Server (ews)
+<!-- This file documents the Emacs Web Server (ws)
 
 Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
@@ -12,10 +12,10 @@ A copy of the license is included in the section entitled
 "GNU Free Documentation License." -->
 <!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Emacs Web Server (ews) User Manual: Hello World HTML</title>
+<title>Emacs Web Server (ws) User Manual: Hello World HTML</title>
 
-<meta name="description" content="Emacs Web Server (ews) User Manual: Hello World HTML">
-<meta name="keywords" content="Emacs Web Server (ews) User Manual: Hello World HTML">
+<meta name="description" content="Emacs Web Server (ws) User Manual: Hello World HTML">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Hello World HTML">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -68,11 +68,11 @@ Next: <a href="File-Server.html#File-Server" accesskey="n" rel="next">File Serve
 <a name="Hello-World-HTML-1"></a>
 <h3 class="section">4.3 Hello World HTML</h3>
 <pre class="verbatim">;;; hello-world-html.el --- html hello world server using Emacs Web Server
-(ews-start
+(ws-start
  '(((lambda (_) t) .
     (lambda (request)
       (with-slots (process headers) request
-        (ews-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
+        (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
         (process-send-string process &quot;&lt;html&gt;
   &lt;head&gt;
     &lt;title&gt;Hello World&lt;/title&gt;

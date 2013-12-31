@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This file documents the Emacs Web Server (ews)
+<!-- This file documents the Emacs Web Server (ws)
 
 Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
@@ -12,10 +12,10 @@ A copy of the license is included in the section entitled
 "GNU Free Documentation License." -->
 <!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Emacs Web Server (ews) User Manual: File Server</title>
+<title>Emacs Web Server (ws) User Manual: File Server</title>
 
-<meta name="description" content="Emacs Web Server (ews) User Manual: File Server">
-<meta name="keywords" content="Emacs Web Server (ews) User Manual: File Server">
+<meta name="description" content="Emacs Web Server (ws) User Manual: File Server">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: File Server">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -71,23 +71,23 @@ Next: <a href="URL-Parameter-Echo.html#URL-Parameter-Echo" accesskey="n" rel="ne
 <p>The following example implements a file server which will serve files
 from the <code>docroot</code> document root set to the current working
 directory in this example.  Three helper functions are used;
-<code>ews-subdirectoryp</code> is used to check if the requested path is
+<code>ws-subdirectoryp</code> is used to check if the requested path is
 within the document root, if so the file is served and
-<code>ews-send-file</code> is used to appropriately set the mime-type of the
+<code>ws-send-file</code> is used to appropriately set the mime-type of the
 response based on the extension of the file, if not then
-<code>ews-send-404</code> is used to send a default &ldquo;File Not Found&rdquo;
+<code>ws-send-404</code> is used to send a default &ldquo;File Not Found&rdquo;
 response.
 </p>
 <pre class="verbatim">;;; file-server.el --- serve any files using Emacs Web Server
 (lexical-let ((docroot default-directory))
-  (ews-start
+  (ws-start
    (list (cons (cons :GET &quot;.*&quot;)
                (lambda (request)
                  (with-slots (process headers) request
                    (let ((path (substring (cdr (assoc :GET headers)) 1)))
-                     (if (ews-subdirectoryp docroot path)
-                         (ews-send-file process (expand-file-name path docroot))
-                       (ews-send-404 process)))))))
+                     (if (ws-subdirectoryp docroot path)
+                         (ws-send-file process (expand-file-name path docroot))
+                       (ws-send-404 process)))))))
    9004))
 </pre>
 
