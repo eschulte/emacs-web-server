@@ -1,9 +1,9 @@
 ;;; hello-world-html.el --- html hello world server using Emacs Web Server
-(ews-start
+(ws-start
  '(((lambda (_) t) .
     (lambda (request)
       (with-slots (process headers) request
-        (ews-response-header process 200 '("Content-type" . "text/html"))
+        (ws-response-header process 200 '("Content-type" . "text/html"))
         (process-send-string process "<html>
   <head>
     <title>Hello World</title>

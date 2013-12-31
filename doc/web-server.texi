@@ -1,10 +1,10 @@
 \input texinfo
 @c @setfilename emacs-web-server.info
 @documentencoding utf-8
-@settitle Emacs Web Server (ews) User Manual
+@settitle Emacs Web Server (ws) User Manual
 
 @copying
-This file documents the Emacs Web Server (ews)
+This file documents the Emacs Web Server (ws)
 
 Copyright (C) 2013 Eric Schulte <schulte.eric@@gmail.com>
 
@@ -20,11 +20,11 @@ A copy of the license is included in the section entitled
 
 @dircategory Emacs misc features
 @direntry
-* Emacs Web Server: (ews).      Web Server for Emacs.
+* Emacs Web Server: (ws).      Web Server for Emacs.
 @end direntry
 
 @titlepage
-@title Emacs Web Server (ews) User Manual
+@title Emacs Web Server (ws) User Manual
 @page
 @vskip 0pt plus 1filll
 @insertcopying
@@ -80,7 +80,7 @@ listed (@pxref{Function Index}).
 @chapter Handlers
 @cindex handlers
 
-The function @code{ews-start} takes takes two arguments
+The function @code{ws-start} takes takes two arguments
 @code{handlers} and @code{port}.  It starts a server listening on
 @code{port} responding to requests with @code{handlers}, an
 association list composed of pairs of matchers and handler functions.
@@ -136,8 +136,8 @@ the handler function returns the keyword @code{:keep-alive}.
 @chapter Requests
 @cindex requests
 
-Each HTTP requests is represented using an @code{ews-request} object
-(@pxref{ews-request}).  The request object is used to decide which
+Each HTTP requests is represented using an @code{ws-request} object
+(@pxref{ws-request}).  The request object is used to decide which
 handler to call, and is passed as an argument to the called handler.
 The request object holds the network process, all HTTP headers, and
 any parameters.
@@ -194,11 +194,11 @@ response instead of a simple @code{text/plain} response.
 The following example implements a file server which will serve files
 from the @code{docroot} document root set to the current working
 directory in this example.  Three helper functions are used;
-@code{ews-subdirectoryp} is used to check if the requested path is
+@code{ws-subdirectoryp} is used to check if the requested path is
 within the document root, if so the file is served and
-@code{ews-send-file} is used to appropriately set the mime-type of the
+@code{ws-send-file} is used to appropriately set the mime-type of the
 response based on the extension of the file, if not then
-@code{ews-send-404} is used to send a default ``File Not Found''
+@code{ws-send-404} is used to send a default ``File Not Found''
 response.
 
 @verbatiminclude ../examples/3-file-server.el
@@ -235,49 +235,49 @@ The following functions implement the Emacs Web Server public API.
 @section Objects
 The following objects represent web servers and requests.
 
-@anchor{ews-server}
-@deftp Class ews-server handlers process port requests
-Every Emacs web server is an instance of the @code{ews-server} class.
+@anchor{ws-server}
+@deftp Class ws-server handlers process port requests
+Every Emacs web server is an instance of the @code{ws-server} class.
 Each instance includes the @code{handlers} association list and
-@code{port} passed to @code{ews-start}, as well as the server network
+@code{port} passed to @code{ws-start}, as well as the server network
 @code{process} and a list of all active @code{requests}.
 @end deftp
 
-@anchor{ews-request}
-@deftp Class ews-request process pending context boundary headers
-The @code{ews-request} class represents an active web request.  The
+@anchor{ws-request}
+@deftp Class ws-request process pending context boundary headers
+The @code{ws-request} class represents an active web request.  The
 @code{process} field holds the network process of the client machine
 and may be used by handlers to respond to requests.  The
 @code{headers} field holds an alist of information on the request for
 use by handlers.  The remaining @code{pending}, @code{context} and
 @code{boundary} fields are used to maintain header parsing information
-across calls to the @code{ews-filter} function.
+across calls to the @code{ws-filter} function.
 @end deftp
 
 @section Starting and Stopping Servers
 @cindex start and stop
 The following functions start and stop Emacs web servers.  The
-@code{ews-servers} list holds all running servers.
+@code{ws-servers} list holds all running servers.
 
-@anchor{ews-start}
-@defun ews-start handlers port &optional log-buffer &rest network-args
-@code{ews-start} starts a server listening on @code{port} using
+@anchor{ws-start}
+@defun ws-start handlers port &optional log-buffer &rest network-args
+@code{ws-start} starts a server listening on @code{port} using
 @code{handlers} (@pxref{Handlers}) to match and respond to requests.
-An instance of the @code{ews-server} class is returned.
+An instance of the @code{ws-server} class is returned.
 @end defun
 
-@anchor{ews-servers}
-@defvar ews-servers
-The @code{ews-servers} list holds all active Emacs web servers.
+@anchor{ws-servers}
+@defvar ws-servers
+The @code{ws-servers} list holds all active Emacs web servers.
 @end defvar
 
-@anchor{ews-stop}
-@defun ews-stop server
-@code{ews-stop} stops @code{server} deletes all related processes, and
+@anchor{ws-stop}
+@defun ws-stop server
+@code{ws-stop} stops @code{server} deletes all related processes, and
 frees the server's port.  Evaluate the following to stop all emacs web
 servers.
 @example
-(mapc #'ews-stop ews-servers)
+(mapc #'ws-stop ws-servers)
 @end example
 @end defun
 
@@ -285,61 +285,61 @@ servers.
 The following convenience functions automate many common tasks
 associated with responding to HTTP requests.
 
-@anchor{ews-response-header}
+@anchor{ws-response-header}
 @cindex content type
-@defun ews-response-header process code &rest header
+@defun ws-response-header process code &rest header
 Send the headers required to start an HTTP response to @code{process}.
-@code{process} should be a @code{ews-request} @code{process} of an
+@code{process} should be a @code{ws-request} @code{process} of an
 active request.  For example start a standard 200 ``OK'' HTML response
 with the following.
 
 @example
-(ews-response-header process 200 '("Content-type" . "text/html"))
+(ws-response-header process 200 '("Content-type" . "text/html"))
 @end example
 
 The encoding may optionally be set in the HTTP header.  Send a UTF8
 encoded response with the following.
 
 @example
-(ews-response-header process 200
+(ws-response-header process 200
             '("Content-type" . "text/plain; charset=utf-8"))
 @end example
 
 @end defun
 
-@anchor{ews-send-500}
-@defun ews-send-500 process &rest msg-and-args
-@code{ews-send-500} sends a default 500 ``Internal Server Error''
+@anchor{ws-send-500}
+@defun ws-send-500 process &rest msg-and-args
+@code{ws-send-500} sends a default 500 ``Internal Server Error''
 response to @code{process}.
 @end defun
 
-@anchor{ews-send-404}
-@defun ews-send-404 process &rest msg-and-args
-@code{ews-send-500} sends a default 404 ``File Not Found'' response to
+@anchor{ws-send-404}
+@defun ws-send-404 process &rest msg-and-args
+@code{ws-send-500} sends a default 404 ``File Not Found'' response to
 @code{process}.
 @end defun
 
-@anchor{ews-send-file}
-@defun ews-send-file process path &optional mime-type
-@code{ews-send-file} sends the file located at @code{path} to
+@anchor{ws-send-file}
+@defun ws-send-file process path &optional mime-type
+@code{ws-send-file} sends the file located at @code{path} to
 @code{process}.  If the optional @code{mime-type} is not set, then the
 mime-type is determined by calling @code{mm-default-file-encoding} on
 @code{path} or is set to ``application/octet-stream'' if no mime-type
 can be determined.
 @end defun
 
-@anchor{ews-in-directory-p}
-@defun ews-in-directory-p parent path
+@anchor{ws-in-directory-p}
+@defun ws-in-directory-p parent path
 Check if @code{path} is under the @code{parent} directory.
 
 @example
-(ews-in-directory-p "/tmp/" "pics")
+(ws-in-directory-p "/tmp/" "pics")
     @result{} "/tmp/pics"
 
-(ews-in-directory-p "/tmp/" "..")
+(ws-in-directory-p "/tmp/" "..")
     @result{} nil
 
-(ews-in-directory-p "/tmp/" "~/pics")
+(ws-in-directory-p "/tmp/" "~/pics")
     @result{} nil
 @end example
 @end defun

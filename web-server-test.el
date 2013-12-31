@@ -1,4 +1,4 @@
-;;; emacs-web-server-test.el --- Test the Emacs Web Server
+;;; web-server-test.el --- Test the Emacs Web Server
 
 ;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
@@ -6,14 +6,14 @@
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Code:
-(require 'emacs-web-server)
+(require 'web-server)
 (require 'cl-lib)
 (eval-when-compile (require 'cl))
 (require 'ert)
 
-(defvar ews-test-port 8999)
+(defvar ws-test-port 8999)
 
-(defun ews-test-curl-to-string (url &optional get-params post-params)
+(defun ws-test-curl-to-string (url &optional get-params post-params)
   "Curl URL with optional parameters."
   (async-shell-command
    (format "curl -m 4 %s %s localhost:%s/%s"
@@ -25,7 +25,7 @@
                (mapconcat (lambda (p) (format "-s -F '%s=%s'" (car p) (cdr p)))
                           post-params " ")
              "")
-           ews-test-port url))
+           ws-test-port url))
   (unwind-protect
       (with-current-buffer "*Async Shell Command*"
         (while (get-buffer-process (current-buffer)) (sit-for 0.1))
@@ -33,47 +33,47 @@
         (buffer-string))
     (kill-buffer "*Async Shell Command*")))
 
-(defmacro ews-test-with (handler &rest body)
+(defmacro ws-test-with (handler &rest body)
   (declare (indent 1))
   (let ((srv (cl-gensym)))
-    `(let* ((,srv (ews-start ,handler ews-test-port)))
-       (unwind-protect (progn ,@body) (ews-stop ,srv)))))
-(def-edebug-spec ews-test-with (form body))
+    `(let* ((,srv (ws-start ,handler ws-test-port)))
+       (unwind-protect (progn ,@body) (ws-stop ,srv)))))
+(def-edebug-spec ws-test-with (form body))
 
-(ert-deftest ews/keyword-style-handler ()
+(ert-deftest ws/keyword-style-handler ()
   "Ensure that a simple keyword-style handler matches correctly."
-  (ews-test-with (mapcar (lambda (letter)
+  (ws-test-with (mapcar (lambda (letter)
                            `((:GET . ,letter) .
                              (lambda (request)
-                               (ews-response-header (process request) 200
+                               (ws-response-header (process request) 200
                                  '("Content-type" . "text/plain"))
                                (process-send-string (process request)
                                  (concat "returned:" ,letter)))))
                          '("a" "b"))
-    (should (string= "returned:a" (ews-test-curl-to-string "a")))
-    (should (string= "returned:b" (ews-test-curl-to-string "b")))))
+    (should (string= "returned:a" (ws-test-curl-to-string "a")))
+    (should (string= "returned:b" (ws-test-curl-to-string "b")))))
 
-(ert-deftest ews/function-style-handler ()
+(ert-deftest ws/function-style-handler ()
   "Test that a simple hello-world server responds."
-  (ews-test-with
+  (ws-test-with
       '(((lambda (_) t) .
          (lambda (request)
-           (ews-response-header (process request) 200
+           (ws-response-header (process request) 200
              '("Content-type" . "text/plain"))
            (process-send-string (process request) "hello world"))))
-    (should (string= (ews-test-curl-to-string "") "hello world"))))
+    (should (string= (ws-test-curl-to-string "") "hello world"))))
 
-(ert-deftest ews/removed-from-ews-servers-after-stop ()
-  (let ((start-length (length ews-servers)))
-    (let ((server (ews-start nil ews-test-port)))
-      (should (= (length ews-servers) (+ 1 start-length)))
-      (ews-stop server)
-      (should (= (length ews-servers) start-length)))))
+(ert-deftest ws/removed-from-ws-servers-after-stop ()
+  (let ((start-length (length ws-servers)))
+    (let ((server (ws-start nil ws-test-port)))
+      (should (= (length ws-servers) (+ 1 start-length)))
+      (ws-stop server)
+      (should (= (length ws-servers) start-length)))))
 
-(ert-deftest ews/parse-many-headers ()
+(ert-deftest ws/parse-many-headers ()
   "Test that a number of headers parse successfully."
-  (let ((server (ews-start nil ews-test-port))
-        (request (make-instance 'ews-request))
+  (let ((server (ws-start nil ws-test-port))
+        (request (make-instance 'ws-request))
         (header-string "GET / HTTP/1.1
 Host: localhost:7777
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -87,17 +87,17 @@ Connection: keep-alive
 "))
     (unwind-protect
         (progn
-          (ews-parse-request request header-string)
+          (ws-parse-request request header-string)
           (let ((headers (cdr (headers request))))
             (should (string= (cdr (assoc :ACCEPT-ENCODING headers))
                              "gzip, deflate"))
             (should (string= (cdr (assoc :GET headers)) "/"))
             (should (string= (cdr (assoc :CONNECTION headers)) "keep-alive"))))
-      (ews-stop server))))
+      (ws-stop server))))
 
-(ert-deftest ews/parse-post-data ()
-  (let ((server (ews-start nil ews-test-port))
-        (request (make-instance 'ews-request))
+(ert-deftest ws/parse-post-data ()
+  (let ((server (ws-start nil ws-test-port))
+        (request (make-instance 'ws-request))
         (header-string "POST / HTTP/1.1
 User-Agent: curl/7.33.0
 Host: localhost:8080
@@ -119,18 +119,18 @@ Content-Disposition: form-data; name=\"name\"
 "))
     (unwind-protect
         (progn
-          (ews-parse-request request header-string)
+          (ws-parse-request request header-string)
           (let ((headers (cdr (headers request))))
             (should (string= (cdr (assoc "name" headers))
                              "\"schulte\""))
             (should (string= (cdr (assoc "date" headers))
                              "Wed Dec 18 00:55:39 MST 2013"))))
-      (ews-stop server))))
+      (ws-stop server))))
 
-(ert-deftest ews/parse-another-post-data ()
+(ert-deftest ws/parse-another-post-data ()
   "This one from an AJAX request."
-  (let ((server (ews-start nil ews-test-port))
-        (request (make-instance 'ews-request))
+  (let ((server (ws-start nil ws-test-port))
+        (request (make-instance 'ws-request))
         (header-string "POST /complex.org HTTP/1.1
 Host: localhost:4444
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -150,7 +150,7 @@ Cache-Control: no-cache
 org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))
     (unwind-protect
         (progn
-          (ews-parse-request request header-string)
+          (ws-parse-request request header-string)
           (let ((headers (cdr (headers request))))
             (message "headers:%S" headers)
             (should (string= (cdr (assoc "path" headers)) "/complex.org"))
@@ -163,31 +163,31 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
 - four
 
 "))))
-      (ews-stop server))))
+      (ws-stop server))))
 
-(ert-deftest ews/simple-post ()
+(ert-deftest ws/simple-post ()
   "Test a simple POST server."
-  (ews-test-with
+  (ws-test-with
       '(((:POST . ".*") .
          (lambda (request)
            (with-slots (process headers) request
              (let ((message (cdr (assoc "message" headers))))
-               (ews-response-header process 200
+               (ws-response-header process 200
                  '("Content-type" . "text/plain"))
                (process-send-string process
                  (format "you said %S\n" message)))))))
-    (should (string= (ews-test-curl-to-string "" nil '(("message" . "foo")))
+    (should (string= (ws-test-curl-to-string "" nil '(("message" . "foo")))
                      "you said \"foo\"\n"))))
 
-(ert-deftest ews/in-directory-p ()
-  (should-not (ews-in-directory-p "/tmp/" "foo/bar/../../../"))
-  (should     (ews-in-directory-p "/tmp/" "foo/bar/../../../tmp/baz"))
-  (should     (ews-in-directory-p "/tmp/" "./"))
-  (should-not (ews-in-directory-p "/tmp/" "/~/pics"))
-  (should-not (ews-in-directory-p "/tmp/" "~/pics"))
-  (should-not (ews-in-directory-p "/tmp/" "/pics"))
-  (should-not (ews-in-directory-p "/tmp/" "../pics"))
-  (should     (ews-in-directory-p "/tmp/" "pics"))
-  (should-not (ews-in-directory-p "/tmp/" "..")))
+(ert-deftest ws/in-directory-p ()
+  (should-not (ws-in-directory-p "/tmp/" "foo/bar/../../../"))
+  (should     (ws-in-directory-p "/tmp/" "foo/bar/../../../tmp/baz"))
+  (should     (ws-in-directory-p "/tmp/" "./"))
+  (should-not (ws-in-directory-p "/tmp/" "/~/pics"))
+  (should-not (ws-in-directory-p "/tmp/" "~/pics"))
+  (should-not (ws-in-directory-p "/tmp/" "/pics"))
+  (should-not (ws-in-directory-p "/tmp/" "../pics"))
+  (should     (ws-in-directory-p "/tmp/" "pics"))
+  (should-not (ws-in-directory-p "/tmp/" "..")))
 
-(provide 'emacs-web-server-test)
+(provide 'web-server-test)

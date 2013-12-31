@@ -1,9 +1,9 @@
 ;;; url-param-echo.el --- echo back url-paramed message using Emacs Web Server
-(ews-start
+(ws-start
  '(((:GET . ".*") .
     (lambda (request)
       (with-slots (process headers) request
-        (ews-response-header process 200 '("Content-type" . "text/html"))
+        (ws-response-header process 200 '("Content-type" . "text/html"))
         (process-send-string process
           (concat "URL Parameters:</br><table><tr>"
                   (mapconcat (lambda (pair)

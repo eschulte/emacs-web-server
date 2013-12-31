@@ -1,7 +1,7 @@
-;;; emacs-web-server-status-codes.el --- Emacs Web Server HTML status codes
+;;; web-server-status-codes.el --- Emacs Web Server HTML status codes
 
 ;;; Code:
-(defvar ews-status-codes
+(defvar ws-status-codes
   '((100 . "Continue")
     (101 . "Switching Protocols")
     (102 . "Processing")
@@ -87,5 +87,5 @@
   "Possible HTML status codes with names.
 From http://en.wikipedia.org/wiki/List_of_HTTP_status_codes.")
 
-(provide 'emacs-web-server-status-codes)
-;;; emacs-web-server-status-codes.el ends here
+(provide 'web-server-status-codes)
+;;; web-server-status-codes.el ends here

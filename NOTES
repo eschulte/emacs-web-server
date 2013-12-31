@@ -28,7 +28,7 @@ Notes to touch upon
 1. read standard for POST data
 2. parse multi-line headers with boundaries
 
-For now keep this all incremental and in ews-filter.
+For now keep this all incremental and in ws-filter.
 
 ** DONE Makefile
 - byte-compile
