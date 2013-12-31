@@ -2,6 +2,18 @@
 
 * Notes
 * Tasks [8/9]
+** incremental handler calls
+not sure if the extra performance is worth the added complexity
+
+Before the header is fully parsed, call any potential handlers.
+Include a field in the request object to indicate that the request
+isn't finished being received so handlers can return and wait to be
+called again.
+
+Also, put a catch in the filter function and allow the =headers=
+function on the request object to throw to said catch aborting the
+handler and waiting for the rest of the input.
+
 ** DONE Documentation [6/6]
 - [X] introduction
 - [X] handlers
