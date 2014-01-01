@@ -1,7 +1,10 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [8/9]
+* Tasks [8/10]
+** TODO documentation for running in a chroot jail
+see https://wiki.archlinux.org/index.php/nginx#Installation_in_a_chroot
+
 ** incremental handler calls
 not sure if the extra performance is worth the added complexity
 

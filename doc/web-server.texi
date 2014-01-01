@@ -69,7 +69,7 @@ The Emacs Web Server is a Web server implemented entirely in Emacs
 Lisp.  HTTP requests are matched to handlers (@pxref{Handlers}) which
 are Emacs Lisp functions.  Handlers receive as their only argument a
 request object (@pxref{Requests}) which holds information about the
-request and the process holding HTTP network connection.  Handlers
+request and a process holding the HTTP network connection.  Handlers
 write their responses directly to the network process.
 
 A number of examples (@pxref{Usage Examples}) demonstrate usage of the
@@ -208,7 +208,7 @@ response.
 
 This example demonstrates access of URL-encoded parameters in a
 @code{GET} request.  For example the following URL
-@url{http://localhost:9005/example?foo=bar&baz=qux} will render as an
+@url{http://localhost:9005/example?foo=bar&baz=qux} will render as
 the following HTML table.
 
 @multitable @columnfractions .5 .5
