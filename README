@@ -19,7 +19,7 @@ EXAMPLES
     Org-mode pages [2].
 
     [1]  https://github.com/eschulte/el-sprunge
-    [2]  https://github.com/eschulte/org-ehtml/tree/emacs-web-server
+    [2]  https://github.com/eschulte/org-ehtml
 
 DOCUMENTATION
     Run `make doc' to build the texinfo documentation, also available
