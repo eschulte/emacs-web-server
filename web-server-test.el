@@ -190,4 +190,22 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
   (should     (ws-in-directory-p "/tmp/" "pics"))
   (should-not (ws-in-directory-p "/tmp/" "..")))
 
+(ert-deftest ws/parse-basic-authorization ()
+  "Test that a number of headers parse successfully."
+  (let* ((server (ws-start nil ws-test-port))
+         (request (make-instance 'ws-request))
+         (username "foo") (password "bar")
+         (header-string (format "GET / HTTP/1.1
+Authorization: Basic %s
+Connection: keep-alive
+
+" (base64-encode-string (concat username ":" password)))))
+    (unwind-protect
+        (progn
+          (ws-parse-request request header-string)
+          (with-slots (headers) request
+            (cl-tree-equal (cdr (assoc :AUTHORIZATION headers))
+                           (cons :BASIC (cons username password)))))
+      (ws-stop server))))
+
 (provide 'web-server-test)

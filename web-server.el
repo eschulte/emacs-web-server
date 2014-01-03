@@ -136,8 +136,10 @@ function.
           (url-parse-query-string string nil 'allow-newlines)))
 
 (defun ws-parse (proc string)
-  (cl-flet ((to-keyword (s) (intern (concat ":" (upcase (match-string 1 s))))))
+  "Parse HTTP headers in STRING reporting errors to PROC."
+  (cl-flet ((to-keyword (s) (intern (concat ":" (upcase s)))))
     (cond
+     ;; Method
      ((string-match ws-http-method-rx string)
       (let ((method (to-keyword (match-string 1 string)))
             (url (match-string 2 string)))
@@ -146,8 +148,25 @@ function.
                   (ws-parse-query-string
                    (url-unhex-string (substring url (match-end 0)))))
           (list (cons method url)))))
+     ;; Authorization
+     ((string-match "^AUTHORIZATION: \\([^[:space:]]+\\) \\(.*\\)$" string)
+      (let ((protocol (to-keyword (match-string 1 string)))
+            (credentials (match-string 2 string)))
+        (list (cons :AUTHORIZATION
+                    (cons protocol
+                          (case protocol
+                            (:BASIC
+                             (let ((cred (base64-decode-string credentials)))
+                               (if (string-match ":" cred)
+                                   (cons (substring cred 0 (match-beginning 0))
+                                         (substring cred (match-end 0)))
+                                 (ws-error proc "bad credentials: %S" cred))))
+                            (t (ws-error proc "un-support protocol: %s"
+                                         protocol))))))))
+     ;; All other headers
      ((string-match "^\\([^[:space:]]+\\): \\(.*\\)$" string)
-      (list (cons (to-keyword string) (match-string 2 string))))
+      (list (cons (to-keyword (match-string 1 string))
+                  (match-string 2 string))))
      (:otherwise (ws-error proc "bad header: %S" string) nil))))
 
 (defun ws-trim (string)

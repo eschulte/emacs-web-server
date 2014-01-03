@@ -158,6 +158,7 @@ These examples demonstrate usage.
 * File Server::                 Serve files from a document root
 * URL Parameter Echo::          Echo Parameters from a URL query string
 * POST Echo::                   Echo POST parameters back
+* Basic Authentication::        BASIC HTTP Authentication
 @end menu
 
 @node Hello World, Hello World UTF8, Usage Examples, Usage Examples
@@ -218,13 +219,31 @@ the following HTML table.
 
 @verbatiminclude ../examples/4-url-param-echo.el
 
-@node POST Echo, Function Index, URL Parameter Echo, Usage Examples
+@node POST Echo, Basic Authentication, URL Parameter Echo, Usage Examples
 @section POST Echo
 
 The following example echos back the content of the ``message'' field
 in a @code{POST} request.
 
 @verbatiminclude ../examples/5-post-echo.el
+
+@node Basic Authentication, Function Index, POST Echo, Usage Examples
+
+The following example demonstrates BASIC HTTP authentication.  The
+handler prompts an unauthenticated client for authentication by
+sending a ``WWW-Authenticate'' header.
+
+@example
+(ws-response-header process 401
+  '("WWW-Authenticate" . "Basic realm=\"example\"")
+  '("Content-type" . "text/plain"))
+@end example
+
+The client replies by setting the ``Authorization'' HTTP header which
+is parsed into a list of the form @code{(PROTOCOL USERNAME
+. PASSWORD)}.  Currently only BASIC HTTP authentication is supported.
+
+@verbatiminclude ../examples/6-basic-authentication.el
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index

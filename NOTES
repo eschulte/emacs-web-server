@@ -1,7 +1,14 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [8/10]
+* Tasks [9/13]
+** TODO authentication [1/2]
+*** DONE Basic
+http://en.wikipedia.org/wiki/Basic_access_authentication
+
+*** TODO Digest
+http://en.wikipedia.org/wiki/Digest_access_authentication
+
 ** TODO documentation for running in a chroot jail
 see https://wiki.archlinux.org/index.php/nginx#Installation_in_a_chroot
 
