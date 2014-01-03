@@ -81,6 +81,11 @@ sending a &ldquo;WWW-Authenticate&rdquo; header.
 is parsed into a list of the form <code>(PROTOCOL USERNAME
 . PASSWORD)</code>.  Currently only BASIC HTTP authentication is supported.
 </p>
+<p>Note: BASIC HTTP authentication passes user credentials in plain text
+between the client and the server and should generally only be used
+with HTTPS network encryption.  The Emacs web server currently doesn&rsquo;t
+support HTTPS network encryption.
+</p>
 <pre class="verbatim">;;; basic-authentication.el --- basic authentication
 (lexical-let ((users '((&quot;foo&quot; . &quot;bar&quot;)
                        (&quot;baz&quot; . &quot;qux&quot;))))
