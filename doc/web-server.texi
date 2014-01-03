@@ -243,6 +243,12 @@ The client replies by setting the ``Authorization'' HTTP header which
 is parsed into a list of the form @code{(PROTOCOL USERNAME
 . PASSWORD)}.  Currently only BASIC HTTP authentication is supported.
 
+@noindent
+Note: BASIC HTTP authentication passes user credentials in plain text
+between the client and the server and should generally only be used
+with HTTPS network encryption.  The Emacs web server currently doesn't
+support HTTPS network encryption.
+
 @verbatiminclude ../examples/6-basic-authentication.el
 
 @node Function Index, Copying, Usage Examples, Top
