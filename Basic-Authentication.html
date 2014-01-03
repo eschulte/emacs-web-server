@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This file documents the Emacs Web Server (ws)
+
+Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with the Invariant Section being "GNU GENERAL PUBLIC LICENSE,"
+A copy of the license is included in the section entitled
+"GNU Free Documentation License." -->
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Emacs Web Server (ws) User Manual: Basic Authentication</title>
+
+<meta name="description" content="Emacs Web Server (ws) User Manual: Basic Authentication">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Basic Authentication">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
+<link href="Function-Index.html#Function-Index" rel="next" title="Function Index">
+<link href="POST-Echo.html#POST-Echo" rel="prev" title="POST Echo">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+<a name="Basic-Authentication"></a>
+<div class="header">
+<p>
+Next: <a href="Function-Index.html#Function-Index" accesskey="n" rel="next">Function Index</a>, Previous: <a href="POST-Echo.html#POST-Echo" accesskey="p" rel="prev">POST Echo</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="node-heading">Basic Authentication</h4>
+
+<p>The following example demonstrates BASIC HTTP authentication.  The
+handler prompts an unauthenticated client for authentication by
+sending a &ldquo;WWW-Authenticate&rdquo; header.
+</p>
+<div class="example">
+<pre class="example">(ws-response-header process 401
+  '(&quot;WWW-Authenticate&quot; . &quot;Basic realm=\&quot;example\&quot;&quot;)
+  '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+</pre></div>
+
+<p>The client replies by setting the &ldquo;Authorization&rdquo; HTTP header which
+is parsed into a list of the form <code>(PROTOCOL USERNAME
+. PASSWORD)</code>.  Currently only BASIC HTTP authentication is supported.
+</p>
+<pre class="verbatim">;;; basic-authentication.el --- basic authentication
+(lexical-let ((users '((&quot;foo&quot; . &quot;bar&quot;)
+                       (&quot;baz&quot; . &quot;qux&quot;))))
+  (ws-start
+   (list
+    (cons (lambda (_) t)
+          (lambda (request)
+            (with-slots (process headers) request
+              (let ((auth (cddr (assoc :AUTHORIZATION headers))))
+                (cond
+                 ;; no authentication information provided
+                 ((not auth)
+                  (ws-response-header process 401
+                    '(&quot;WWW-Authenticate&quot; . &quot;Basic realm=\&quot;example\&quot;&quot;)
+                    '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+                  (process-send-string process &quot;authenticate&quot;))
+                 ;; valid authentication information
+                 ((string= (cdr auth) (cdr (assoc (car auth) users)))
+                  (ws-response-header process 200
+                    '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+                  (process-send-string process
+                    (format &quot;welcome %s&quot; (car auth))))
+                 ;; invalid authentication information
+                 (t
+                  (ws-response-header process 403
+                    '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+                  (process-send-string process &quot;invalid credentials&quot;))))))))
+   9007))
+</pre>
+
+
+
+</body>
+</html>
