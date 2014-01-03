@@ -83,8 +83,9 @@ is parsed into a list of the form <code>(PROTOCOL USERNAME
 </p>
 <p>Note: BASIC HTTP authentication passes user credentials in plain text
 between the client and the server and should generally only be used
-with HTTPS network encryption.  The Emacs web server currently doesn&rsquo;t
-support HTTPS network encryption.
+with HTTPS network encryption.  While the Emacs web server currently
+doesn&rsquo;t support HTTPS network encryption it may be run behind an HTTPS
+proxy server (e.g., Apache) which does support HTTPS.
 </p>
 <pre class="verbatim">;;; basic-authentication.el --- basic authentication
 (lexical-let ((users '((&quot;foo&quot; . &quot;bar&quot;)
