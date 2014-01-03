@@ -43,7 +43,7 @@ A copy of the license is included in the section entitled
 @menu
 * Introduction::                Overview of the Emacs Web Server
 * Handlers::                    Handlers respond to HTTP requests
-* Requests::                     Getting information on HTTP requests
+* Requests::                    Getting information on HTTP requests
 * Usage Examples::              Examples demonstrating usage
 * Function Index::              List of Functions
 
@@ -246,8 +246,9 @@ is parsed into a list of the form @code{(PROTOCOL USERNAME
 @noindent
 Note: BASIC HTTP authentication passes user credentials in plain text
 between the client and the server and should generally only be used
-with HTTPS network encryption.  The Emacs web server currently doesn't
-support HTTPS network encryption.
+with HTTPS network encryption.  While the Emacs web server currently
+doesn't support HTTPS network encryption it may be run behind an HTTPS
+proxy server (e.g., Apache) which does support HTTPS.
 
 @verbatiminclude ../examples/6-basic-authentication.el
 

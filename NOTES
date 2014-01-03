@@ -9,6 +9,17 @@ http://en.wikipedia.org/wiki/Basic_access_authentication
 *** TODO Digest
 http://en.wikipedia.org/wiki/Digest_access_authentication
 
+If this is implemented, it would be good to implement some safeguards
+against common attacks.
+
+#+begin_quote
+- Server nonce is allowed to contain timestamps. Therefore the server
+  may inspect nonce attributes submitted by clients, to prevent replay
+  attacks.
+- Server is also allowed to maintain a list of recently issued or used
+  server nonce values to prevent reuse.
+#+end_quote
+
 ** TODO documentation for running in a chroot jail
 see https://wiki.archlinux.org/index.php/nginx#Installation_in_a_chroot
 
@@ -78,4 +89,6 @@ process text without something gross like the =(sit-for 0.1)= used in
 the test suite.
 
 ** TODO use gnutls for https
-I think this should work.
+This will be a pain, and will require expanding [[info:emacs-gnutls]] to
+add support for starting server processes, currently only client
+processes are supported.
