@@ -24,7 +24,7 @@ A copy of the license is included in the section entitled
 <link href="Index.html#Index" rel="index" title="Index">
 <link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
-<link href="Function-Index.html#Function-Index" rel="next" title="Function Index">
+<link href="Org_002dmode-Export-Server.html#Org_002dmode-Export-Server" rel="next" title="Org-mode Export Server">
 <link href="POST-Echo.html#POST-Echo" rel="prev" title="POST Echo">
 <style type="text/css">
 <!--
@@ -62,10 +62,11 @@ ul.no-bullet {list-style: none}
 <a name="Basic-Authentication"></a>
 <div class="header">
 <p>
-Next: <a href="Function-Index.html#Function-Index" accesskey="n" rel="next">Function Index</a>, Previous: <a href="POST-Echo.html#POST-Echo" accesskey="p" rel="prev">POST Echo</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="Org_002dmode-Export-Server.html#Org_002dmode-Export-Server" accesskey="n" rel="next">Org-mode Export Server</a>, Previous: <a href="POST-Echo.html#POST-Echo" accesskey="p" rel="prev">POST Echo</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
 </div>
 <hr>
-<h4 class="node-heading">Basic Authentication</h4>
+<a name="Basic-Authentication-1"></a>
+<h3 class="section">4.7 Basic Authentication</h3>
 
 <p>The following example demonstrates BASIC HTTP authentication.  The
 handler prompts an unauthenticated client for authentication by
@@ -85,7 +86,7 @@ is parsed into a list of the form <code>(PROTOCOL USERNAME
 between the client and the server and should generally only be used
 with HTTPS network encryption.  While the Emacs web server currently
 doesn&rsquo;t support HTTPS network encryption it may be run behind an HTTPS
-proxy server (e.g., Apache) which does support HTTPS.
+proxy server (e.g., Apache or Nginx) with HTTPS support.
 </p>
 <pre class="verbatim">;;; basic-authentication.el --- basic authentication
 (lexical-let ((users '((&quot;foo&quot; . &quot;bar&quot;)
