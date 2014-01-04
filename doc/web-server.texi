@@ -159,6 +159,7 @@ These examples demonstrate usage.
 * URL Parameter Echo::          Echo Parameters from a URL query string
 * POST Echo::                   Echo POST parameters back
 * Basic Authentication::        BASIC HTTP Authentication
+* Org-mode Export Server::      Export files to HTML and Tex
 @end menu
 
 @node Hello World, Hello World UTF8, Usage Examples, Usage Examples
@@ -227,7 +228,8 @@ in a @code{POST} request.
 
 @verbatiminclude ../examples/5-post-echo.el
 
-@node Basic Authentication, Function Index, POST Echo, Usage Examples
+@node Basic Authentication, Org-mode Export Server, POST Echo, Usage Examples
+@section Basic Authentication
 
 The following example demonstrates BASIC HTTP authentication.  The
 handler prompts an unauthenticated client for authentication by
@@ -248,9 +250,18 @@ Note: BASIC HTTP authentication passes user credentials in plain text
 between the client and the server and should generally only be used
 with HTTPS network encryption.  While the Emacs web server currently
 doesn't support HTTPS network encryption it may be run behind an HTTPS
-proxy server (e.g., Apache) which does support HTTPS.
+proxy server (e.g., Apache or Nginx) with HTTPS support.
 
 @verbatiminclude ../examples/6-basic-authentication.el
+
+@node Org-mode Export Server, Function Index, Basic Authentication, Usage Examples
+@section Org-mode Export Server
+
+The following example exports a directory of Org-mode files as either
+text, HTML or LaTeX.  The Org-mode export engine is used to export
+files on-demand as they are requested.
+
+@verbatiminclude ../examples/7-org-mode-file-server.el
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index
