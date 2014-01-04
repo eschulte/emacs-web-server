@@ -5,7 +5,7 @@
                (lambda (request)
                  (with-slots (process headers) request
                    (let ((path (substring (cdr (assoc :GET headers)) 1)))
-                     (if (ws-subdirectoryp docroot path)
+                     (if (ws-in-directory-p docroot path)
                          (ws-send-file process (expand-file-name path docroot))
                        (ws-send-404 process)))))))
    9003))
