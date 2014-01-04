@@ -53,6 +53,7 @@
 (defvar ws-log-time-format "%Y.%m.%d.%H.%M.%S.%N"
   "Logging time format passed to `format-time-string'.")
 
+;;;###autoload
 (defun ws-start (handlers port &optional log-buffer &rest network-args)
   "Start a server using HANDLERS and return the server object.
 
