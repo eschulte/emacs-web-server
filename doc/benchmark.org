@@ -1,0 +1,192 @@
+#+Title: Benchmark
+#+HTML_HEAD: <style>pre{background:#232323; color:#E6E1DC;} table{margin:auto} @media(min-width:800px){div#content{max-width:800px; padding:2em; margin:auto;}}</style>
+#+Options: ^:{} toc:nil num:nil
+
+A quick and dirty comparison of [[https://github.com/eschulte/emacs-web-server][web-server]] and [[https://github.com/nicferrier/elnode][elnode]] runtime across
+three levels of concurrency.  A simple GET request with a url-encoded
+parameter is used for evaluation.  We send 5000 requests to each
+webserver in parallel batches of varying size to each webserver and
+time how long it takes for all responses to be answered.  Run on my
+x220 laptop with two dual-core Intel i7 CPUs, using [[http://www.gnu.org/software/parallel/][GNU parallel]] we
+see the following results.
+
+#+Caption: Runtime in seconds to serve 5,000 requests.
+#+name: comparison
+| concurrency | web-server |    elnode |
+|-------------+------------+-----------|
+|           1 |     40.513 |  46.88325 |
+|          10 |    24.5505 | 32.250625 |
+|         500 |   33.52825 | 63.894625 |
+
+Web-server is faster than Elnode at all levels (although I suppose
+neither is particularly impressive), and the performance gain seems to
+improve as concurrency increases.  The limit of 500 concurrent
+requests is due to limits of the "parallel" utility on my laptop.
+
+#+begin_src gnuplot :var data=comparison :file runtime-comparison.svg
+  set title 'Percent Runtime Reduction of web-server Compared to elnode'
+  set logscale x
+  set xrange [0.5:]
+  set ylabel 'Runtime Reduction'
+  set format y "%g%%"
+  set xlabel 'Number of Concurrent Requests'
+  plot data using 1:(($3-$2)/$3)*100 lw 4 notitle
+#+end_src
+
+#+RESULTS:
+[[file:runtime-comparison.svg]]
+
+Specifics on the [[#get-request][GET Request]] and [[#evaluation][Evaluation]] are given below.
+
+* GET Request
+   :PROPERTIES:
+   :CUSTOM_ID: get-request
+   :END:
+The server reads an integer from the GET parameter n, adds 1 to the
+value of "n" and responds with the value of n+1.
+
+- Web Server
+  #+begin_src emacs-lisp
+    (ws-start
+     '(((:GET . "*") .
+        (lambda (request)
+          (with-slots (process headers) request
+            (ws-response-header process 200 '("Content-type" . "text/plain"))
+            (process-send-string process
+              (int-to-string (+ 1 (string-to-int (cdr (assoc "n" headers))))))))))
+     9004)
+  #+end_src
+
+- Elnode
+  #+begin_src emacs-lisp
+    (elnode-start
+     (lambda (httpcon)
+       (elnode-http-start httpcon 200 '("Content-Type" . "text/plain"))
+       (elnode-http-return httpcon
+         (int-to-string (+ 1 (string-to-int
+                              (cdr (assoc "n" (elnode-http-params httpcon))))))))
+     :port 9005 :host "localhost")
+  #+end_src
+
+* Evaluation
+  :PROPERTIES:
+  :CUSTOM_ID: evaluation
+  :END:
+** The most parallelism
+#+begin_src sh :var port=9004
+  submit(){
+      local port=$1;
+      for i in {0..5000};do
+          echo "curl -s -G -d \"n=$i\" http://localhost:$port"
+      done|parallel -j 500|sha1sum; }
+  
+  for j in {0..8};do
+      echo web server
+      time submit 9004
+      echo elnode
+      time submit 9005
+  done2>&1|tee /tmp/output
+#+end_src
+
+A little munging of the output from =/tmp/output=,
+
+#+begin_src sh
+  cat /tmp/output \
+      |grep -e "real\|web server\|elnode" \
+      |tr '\n' ' ' \
+      |sed 's/web server/\nws/g;s/elnode/\nen/g;s/real//g'
+#+end_src
+
+yields the following.
+
+|  run |             web-server |                  elnode |
+|------+------------------------+-------------------------|
+|    1 |                 26.459 |                  43.484 |
+|    2 |                 34.289 |                  78.984 |
+|    3 |                 29.860 |                  38.646 |
+|    4 |                 34.454 |                  40.742 |
+|    5 |                 35.710 |                  42.884 |
+|    6 |                 36.962 |                  89.897 |
+|    7 |                 39.397 |                 129.905 |
+|    8 |                 31.095 |                  46.615 |
+|------+------------------------+-------------------------|
+| mean | 33.52825 +/- 1.4746653 | 63.894625 +/- 11.643012 |
+#+TBLFM: @10$2=vmeane(@2..@-1)::@10$3=vmeane(@2..@-1)
+
+My guess is that the added overhead for the elnode runs is due to the
+increased logging and the overhead of the callback model of execution.
+
+Twice the following [[#undo-warning]] was thrown during elnode service.
+
+** Run again with much less parallelism
+With =parallel -j 10= instead of =parallel -j 500=.
+
+The [[#undo-warning]] was thrown 3 times by elnode in this run.
+
+|  run |            web-server |                  elnode |
+|------+-----------------------+-------------------------|
+|    1 |                18.366 |                  24.034 |
+|    2 |                21.807 |                  30.930 |
+|    3 |                23.589 |                  35.878 |
+|    4 |                25.562 |                  33.244 |
+|    5 |                25.882 |                  32.824 |
+|    6 |                25.584 |                  33.210 |
+|    7 |                28.852 |                  33.532 |
+|    8 |                26.762 |                  34.353 |
+|------+-----------------------+-------------------------|
+| mean | 24.5505 +/- 1.1492008 | 32.250625 +/- 1.2727409 |
+#+TBLFM: @10$2=vmeane(@2..@-1)::@10$3=vmeane(@2..@-1)
+
+** Finally with no parallelism
+#+begin_src sh
+  submit(){
+      local port=$1;
+      for i in {0..5000};do
+          curl -s -G -d "n=$i" http://localhost:$port
+      done|sha1sum; }
+  
+  for j in {0..7};do
+      echo web server
+      time submit 9004
+      echo elnode
+      time submit 9005
+  done
+#+end_src
+
+|  run |             web-server |                  elnode |
+|------+------------------------+-------------------------|
+|    1 |                 39.896 |                  49.528 |
+|    2 |                 40.573 |                  46.410 |
+|    3 |                 40.460 |                  46.669 |
+|    4 |                 40.695 |                  46.226 |
+|    5 |                 40.587 |                  46.995 |
+|    6 |                 40.644 |                  46.506 |
+|    7 |                 40.807 |                  46.648 |
+|    8 |                 40.442 |                  46.084 |
+|------+------------------------+-------------------------|
+| mean | 40.513 +/- 0.097681699 | 46.88325 +/- 0.39063816 |
+#+TBLFM: @10$2=vmeane(@2..@-1)::@10$3=vmeane(@2..@-1)
+
+** Undo warning thrown by elnode
+     :PROPERTIES:
+     :CUSTOM_ID: undo-warning
+     :END:
+: Warning (undo): Buffer `*elnode-server-error*' undo info was 30181148 bytes long.
+: The undo info was discarded because it exceeded `undo-outer-limit'.
+: 
+: This is normal if you executed a command that made a huge change
+: to the buffer.  In that case, to prevent similar problems in the
+: future, set `undo-outer-limit' to a value that is large enough to
+: cover the maximum size of normal changes you expect a single
+: command to make, but not so large that it might exceed the
+: maximum memory allotted to Emacs.
+: 
+: If you did not execute any such command, the situation is
+: probably due to a bug and you should report it.
+: 
+: You can disable the popping up of this buffer by adding the entry
+: (undo discard-info) to the user option `warning-suppress-types',
+: which is defined in the `warnings' library.
+
+This should be fairly easy to fix.
+
