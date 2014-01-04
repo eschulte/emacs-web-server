@@ -69,8 +69,8 @@ Next: <a href="Function-Index.html#Function-Index" accesskey="n" rel="next">Func
 <h3 class="section">4.8 Org-mode Export Server</h3>
 
 <p>The following example exports a directory of Org-mode files as either
-HTML or LaTeX.  The Org-mode export engine is used to export files
-on-demand as they are requested.
+text, HTML or LaTeX.  The Org-mode export engine is used to export
+files on-demand as they are requested.
 </p>
 <pre class="verbatim">;;; file-server.el --- serve on-demand exported Org-mode files
 (lexical-let ((docroot default-directory))
@@ -86,6 +86,7 @@ on-demand as they are requested.
                    (type (case (intern (downcase (file-name-extension path)))
                            (html 'html)
                            (tex  'latex)
+                           (txt  'ascii)
                            (t (ws-error process &quot;%S export not supported&quot;
                                         (file-name-extension path)))))
                    (orig (concat base &quot;.org&quot;)))
