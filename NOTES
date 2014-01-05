@@ -1,7 +1,21 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [9/13]
+* Tasks [9/20]
+** TODO handle large files
+When large files arrive quickly, the filter functions are called while
+they are still running on the previous chunk, this leads to nasty race
+conditions for the state of the request object.
+
+Either introduce some check to wait on new input if input is currently
+being parsed, or wait until all input has arrived before doing any
+parsing.
+
+** TODO robustness to bad requests [0/2]
+Low priority, just [[*running%20behind%20a%20proxy][run behind a proxy]].
+
+*** TODO request timeout
+*** TODO maximum request size
 ** TODO authentication [1/2]
 *** DONE Basic
 http://en.wikipedia.org/wiki/Basic_access_authentication
@@ -20,7 +34,10 @@ against common attacks.
   server nonce values to prevent reuse.
 #+end_quote
 
-** TODO documentation for running in a chroot jail
+** TODO tutorial or usage section in documentation [0/3]
+*** TODO running behind an https proxy
+*** TODO running behind a proxy
+*** TODO documentation for running in a chroot jail
 see https://wiki.archlinux.org/index.php/nginx#Installation_in_a_chroot
 
 ** incremental handler calls
@@ -89,6 +106,8 @@ process text without something gross like the =(sit-for 0.1)= used in
 the test suite.
 
 ** TODO use gnutls for https
+low priority -- just [[*running%20behind%20an%20https%20proxy][run behind an https proxy]].
+
 This will be a pain, and will require expanding [[info:emacs-gnutls]] to
 add support for starting server processes, currently only client
 processes are supported.
