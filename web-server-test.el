@@ -208,4 +208,33 @@ Connection: keep-alive
                            (cons :BASIC (cons username password)))))
       (ws-stop server))))
 
+(ert-deftest ws/parse-large-file-upload ()
+  "Test that `ws-parse-request' can handle at large file upload.
+At least when it comes in a single chunk."
+  (let* ((long-string (mapconcat #'int-to-string (number-sequence 0 20000) " "))
+         (long-request
+          (format "POST / HTTP/1.1
+User-Agent: curl/7.34.0
+Host: localhost:9008
+Accept: */*
+Content-Length: 9086
+Expect: 100-continue
+Content-Type: multipart/form-data; boundary=----------------e458fb665704290b
+
+------------------e458fb665704290b
+Content-Disposition: form-data; name=\"file\"; filename=\"-\"
+Content-Type: application/octet-stream
+
+%s
+------------------e458fb665704290b--
+
+" long-string))
+         (server (ws-start nil ws-test-port))
+         (request (make-instance 'ws-request)))
+    (unwind-protect
+        (progn (ws-parse-request request long-request)
+               (should (string= long-string
+                                (cdr (assoc 'content (cdr (assoc "file" (headers request))))))))
+      (ws-stop server))))
+
 (provide 'web-server-test)
