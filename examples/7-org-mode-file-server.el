@@ -1,4 +1,4 @@
-;;; file-server.el --- serve on-demand exported Org-mode files
+;;; org-mode-file-server.el --- serve on-demand exported Org-mode files
 (lexical-let ((docroot default-directory))
   (ws-start
    (list
