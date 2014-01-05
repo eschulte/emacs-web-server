@@ -7,7 +7,7 @@
           (ws-response-header process 200 '("Content-type" . "text/plain"))
           (process-send-string process
             (if message
-                (format "you said %S\n" message)
+                (format "you said %S\n" (cdr (assoc 'content message)))
               "This is a POST request, but it has no \"message\".\n"))))))
    ((:GET . ".*") .
     (lambda (request)

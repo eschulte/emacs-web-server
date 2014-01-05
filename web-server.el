@@ -178,12 +178,22 @@ function.
                        (setq string (substring string 1))))))
   string)
 
-(defun ws-parse-multipart/form (string)
+(defun ws-parse-multipart/form (proc string)
   ;; ignore empty and non-content blocks
   (when (string-match "Content-Disposition:[[:space:]]*\\(.*\\)\r\n" string)
-    (let ((dp (mail-header-parse-content-disposition (match-string 1 string))))
-      (cons (cdr (assoc 'name (cdr dp)))
-            (ws-trim (substring string (match-end 0)))))))
+    (let ((dp (cdr (mail-header-parse-content-disposition
+                    (match-string 1 string))))
+          (last-index (match-end 0))
+          index)
+      ;; every line up until the double \r\n is a header
+      (while (and (setq index (string-match "\r\n" string last-index))
+                  (not (= index last-index)))
+        (setcdr (last dp) (ws-parse proc (substring string last-index index)))
+        (setq last-index (+ 2 index)))
+      ;; after double \r\n is all content
+      (cons (cdr (assoc 'name dp))
+            (cons (cons 'content (substring string (+ 2 last-index)))
+                  dp)))))
 
 (defun ws-filter (proc string)
   (with-slots (handlers requests) (plist-get (process-plist proc) :server)
@@ -231,9 +241,8 @@ Return non-nil only when parsing is complete."
               (if (eql context 'multipart/form-data)
                   (progn
                     (setcdr (last headers)
-                            (list (ws-parse-multipart/form
-                                   (ws-trim
-                                    (substring pending last-index index)))))
+                            (list (ws-parse-multipart/form process
+                                   (substring pending last-index index))))
                     ;; Boundary suffixed by "--" indicates end of the headers.
                     (when (and (> (length pending) (+ tmp 2))
                                (string= (substring pending tmp (+ tmp 2)) "--"))

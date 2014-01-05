@@ -121,10 +121,10 @@ Content-Disposition: form-data; name=\"name\"
         (progn
           (ws-parse-request request header-string)
           (let ((headers (cdr (headers request))))
-            (should (string= (cdr (assoc "name" headers))
+            (should (string= (cdr (assoc 'content (cdr (assoc "name" headers))))
                              "\"schulte\""))
-            (should (string= (cdr (assoc "date" headers))
-                             "Wed Dec 18 00:55:39 MST 2013"))))
+            (should (string= (cdr (assoc 'content (cdr (assoc "date" headers))))
+                             "Wed Dec 18 00:55:39 MST 2013\n"))))
       (ws-stop server))))
 
 (ert-deftest ws/parse-another-post-data ()
@@ -175,7 +175,7 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
                (ws-response-header process 200
                  '("Content-type" . "text/plain"))
                (process-send-string process
-                 (format "you said %S\n" message)))))))
+                 (format "you said %S\n" (cdr (assoc 'content message)))))))))
     (should (string= (ws-test-curl-to-string "" nil '(("message" . "foo")))
                      "you said \"foo\"\n"))))
 
