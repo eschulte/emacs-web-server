@@ -39,8 +39,40 @@ against common attacks.
 #+end_quote
 
 ** TODO tutorial or usage section in documentation [0/3]
-*** TODO running behind an https proxy
 *** TODO running behind a proxy
+*** TODO running behind an https proxy
+**** Nginx
+http://www.cyberciti.biz/faq/howto-linux-unix-setup-nginx-ssl-proxy/
+
+**** Apache
+The following example configuration will cause Apache to act as an
+HTTPS proxy for an instance of the Emacs web server running on the
+same machine.  With this setup Apache speaks HTTPS to the outside
+world, and communicates with the Emacs web server using HTTP.  This
+requires that Apache has =mod_proxy= and =mod_ssl= enabled, and that
+the certificate and key files required for SSL are present.
+
+Assuming the Emacs web server is listening on port 8888 and is running
+on the same machine as Apache an Apache virtual host configuration
+along the same lines as the following should work.
+
+: <VirtualHost *:443>
+:     ProxyPreserveHost On
+:     ServerName yourserver.com
+: 
+:     SSLEngine On
+:     SSLCertificateFile /etc/httpd/conf/server.crt
+:     SSLCertificateKeyFile /etc/httpd/conf/server.key
+: 
+:     # Require SSL for all pages
+:     <Location/>
+:         SSLRequireSSL
+:     </Location>
+: 
+:     ProxyPass / http://127.0.0.1:8888/
+:     ProxyPassReverse / http://127.0.0.1:8888/
+: </VirtualHost>
+
 *** TODO documentation for running in a chroot jail
 see https://wiki.archlinux.org/index.php/nginx#Installation_in_a_chroot
 
