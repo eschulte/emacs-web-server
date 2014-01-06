@@ -7,11 +7,12 @@ REQUIREMENTS
     Emacs 24.3 or later.
 
 STATUS
-    This is a new project without much extended use so there are
-    likely bugs and potentially security issues.  That said it
-    consists of little more than HTTP header parsing logic perched
-    atop Emacs' existing network process primitives, so it should be
-    fairly robust.
+    Full support for HTTP GET and POST requests including URL-encoded
+    parameters, multipart/form data and file uploads.  This is a new
+    project without much extended use so there are likely bugs and
+    potentially security issues.  That said it consists of little more
+    than HTTP header parsing logic perched atop Emacs' existing
+    network process primitives, so it should be fairly robust.
 
 EXAMPLES
     See the examples/ directory in this repository.  The Emacs Web

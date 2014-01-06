@@ -11,7 +11,7 @@
 ;; A web server in Emacs running handlers written in Emacs Lisp.
 ;;
 ;; Full support for GET and POST requests including URL-encoded
-;; parameters and multi-part/form data.
+;; parameters and multipart/form data.
 ;;
 ;; See the examples/ directory for examples demonstrating the usage of
 ;; the Emacs Web Server.  The following launches a simple "hello

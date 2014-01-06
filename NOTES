@@ -1,8 +1,8 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [9/20]
-** TODO handle large files
+* Tasks [10/20]
+** DONE handle large files
 When large files arrive quickly, the filter functions are called while
 they are still running on the previous chunk, this leads to nasty race
 conditions for the state of the request object.
@@ -10,6 +10,10 @@ conditions for the state of the request object.
 Either introduce some check to wait on new input if input is currently
 being parsed, or wait until all input has arrived before doing any
 parsing.
+
+Now using an =active= field on request objects to avoid race
+conditions when new header text is received while the parsing function
+is still active.
 
 ** TODO robustness to bad requests [0/2]
 Low priority, just [[*running%20behind%20a%20proxy][run behind a proxy]].
