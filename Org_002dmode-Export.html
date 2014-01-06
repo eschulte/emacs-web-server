@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This file documents the Emacs Web Server (ws)
+
+Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with the Invariant Section being "GNU GENERAL PUBLIC LICENSE,"
+A copy of the license is included in the section entitled
+"GNU Free Documentation License." -->
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Emacs Web Server (ws) User Manual: Org-mode Export</title>
+
+<meta name="description" content="Emacs Web Server (ws) User Manual: Org-mode Export">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Org-mode Export">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
+<link href="File-Upload.html#File-Upload" rel="next" title="File Upload">
+<link href="Basic-Authentication.html#Basic-Authentication" rel="prev" title="Basic Authentication">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+<a name="Org_002dmode-Export"></a>
+<div class="header">
+<p>
+Next: <a href="File-Upload.html#File-Upload" accesskey="n" rel="next">File Upload</a>, Previous: <a href="Basic-Authentication.html#Basic-Authentication" accesskey="p" rel="prev">Basic Authentication</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Org_002dmode-Export-1"></a>
+<h3 class="section">4.8 Org-mode Export</h3>
+
+<p>The following example exports a directory of Org-mode files as either
+text, HTML or LaTeX.  The Org-mode export engine is used to export
+files on-demand as they are requested.
+</p>
+<pre class="verbatim">;;; org-mode-file-server.el --- serve on-demand exported Org-mode files
+(lexical-let ((docroot default-directory))
+  (ws-start
+   (list
+    (cons '(:GET . &quot;.*&quot;)
+      (lambda (request)
+        (with-slots (process headers) request
+          (let ((path (ws-in-directory-p ; check if path is in docroot
+                       docroot (substring (cdr (assoc :GET headers)) 1))))
+            (unless path (ws-send-404 process)) ; send 404 if not in docroot
+            (let* ((base (file-name-sans-extension path))
+                   (type (case (intern (downcase (file-name-extension path)))
+                           (html 'html)
+                           (tex  'latex)
+                           (txt  'ascii)
+                           (t (ws-error process &quot;%S export not supported&quot;
+                                        (file-name-extension path)))))
+                   (orig (concat base &quot;.org&quot;)))
+              (unless (file-exists-p orig) (ws-send-404 process))
+              (save-window-excursion (find-file orig)
+                                     (org-export-to-file type path))
+              (ws-send-file process path)))))))
+   9007))
+</pre>
+
+
+
+</body>
+</html>

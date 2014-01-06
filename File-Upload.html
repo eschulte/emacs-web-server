@@ -12,10 +12,10 @@ A copy of the license is included in the section entitled
 "GNU Free Documentation License." -->
 <!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
 <head>
-<title>Emacs Web Server (ws) User Manual: POST Echo</title>
+<title>Emacs Web Server (ws) User Manual: File Upload</title>
 
-<meta name="description" content="Emacs Web Server (ws) User Manual: POST Echo">
-<meta name="keywords" content="Emacs Web Server (ws) User Manual: POST Echo">
+<meta name="description" content="Emacs Web Server (ws) User Manual: File Upload">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: File Upload">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -24,8 +24,8 @@ A copy of the license is included in the section entitled
 <link href="Index.html#Index" rel="index" title="Index">
 <link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
-<link href="Basic-Authentication.html#Basic-Authentication" rel="next" title="Basic Authentication">
-<link href="URL-Parameter-Echo.html#URL-Parameter-Echo" rel="prev" title="URL Parameter Echo">
+<link href="Function-Index.html#Function-Index" rel="next" title="Function Index">
+<link href="Org_002dmode-Export.html#Org_002dmode-Export" rel="prev" title="Org-mode Export">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
@@ -59,37 +59,41 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
-<a name="POST-Echo"></a>
+<a name="File-Upload"></a>
 <div class="header">
 <p>
-Next: <a href="Basic-Authentication.html#Basic-Authentication" accesskey="n" rel="next">Basic Authentication</a>, Previous: <a href="URL-Parameter-Echo.html#URL-Parameter-Echo" accesskey="p" rel="prev">URL Parameter Echo</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="Function-Index.html#Function-Index" accesskey="n" rel="next">Function Index</a>, Previous: <a href="Org_002dmode-Export.html#Org_002dmode-Export" accesskey="p" rel="prev">Org-mode Export</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
 </div>
 <hr>
-<a name="POST-Echo-1"></a>
-<h3 class="section">4.6 POST Echo</h3>
+<a name="File-Upload-1"></a>
+<h3 class="section">4.9 File Upload</h3>
 
-<p>The following example echos back the content of the &ldquo;message&rdquo; field
-in a <code>POST</code> request.
+<p>The following example demonstrates accessing an uploaded file.  This
+simple server accesses the file named &ldquo;file&rdquo; and returns it&rsquo;s
+sha1sum and file name.
 </p>
-<pre class="verbatim">;;; post-echo.el --- echo back posted message using Emacs Web Server
+<pre class="verbatim">;;; file-upload.el --- use an uploaded file
 (ws-start
  '(((:POST . &quot;.*&quot;) .
     (lambda (request)
       (with-slots (process headers) request
-        (let ((message (cdr (assoc &quot;message&quot; headers))))
-          (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
-          (process-send-string process
-            (if message
-                (format &quot;you said %S\n&quot; (cdr (assoc 'content message)))
-              &quot;This is a POST request, but it has no \&quot;message\&quot;.\n&quot;))))))
-   ((:GET . &quot;.*&quot;) .
-    (lambda (request)
-      (with-slots (process) request
         (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
-        (process-send-string process
-          &quot;This is a GET request not a POST request.\n&quot;)))))
- 9005)
+        (let ((file (cdr (assoc &quot;file&quot; headers))))
+          (process-send-string process
+            (concat (sha1 (cdr (assoc 'content file))) &quot;  &quot;
+                    (cdr (assoc 'filename file)) &quot;\n&quot;)))))))
+ 9008)
 </pre>
+<p>A file may be uploaded from an HTML form, or using the <code>curl</code>
+program as in the following example.
+</p>
+<div class="example">
+<pre class="example">$ curl -s -F file=usr/share/emacs/24.3/etc/COPYING localhost:9008
+8624bcdae55baeef00cd11d5dfcfa60f68710a02  COPYING
+$ sha1sum /usr/share/emacs/24.3/etc/COPYING
+8624bcdae55baeef00cd11d5dfcfa60f68710a02  /usr/share/emacs/24.3/etc/COPYING
+</pre></div>
+
 
 
 

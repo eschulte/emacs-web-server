@@ -25,7 +25,7 @@ A copy of the license is included in the section entitled
 <link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="index.html#Top" rel="up" title="Top">
 <link href="Copying.html#Copying" rel="next" title="Copying">
-<link href="Org_002dmode-Export-Server.html#Org_002dmode-Export-Server" rel="prev" title="Org-mode Export Server">
+<link href="File-Upload.html#File-Upload" rel="prev" title="File Upload">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
@@ -84,14 +84,14 @@ Each instance includes the <code>handlers</code> association list and
 </p></dd></dl>
 
 <a name="ws_002drequest"></a><dl>
-<dt><a name="index-ws_002drequest"></a>Class: <strong>ws-request</strong> <em>process pending context boundary headers</em></dt>
+<dt><a name="index-ws_002drequest"></a>Class: <strong>ws-request</strong> <em>process pending context boundary index active headers</em></dt>
 <dd><p>The <code>ws-request</code> class represents an active web request.  The
-<code>process</code> field holds the network process of the client machine
-and may be used by handlers to respond to requests.  The
-<code>headers</code> field holds an alist of information on the request for
-use by handlers.  The remaining <code>pending</code>, <code>context</code> and
-<code>boundary</code> fields are used to maintain header parsing information
-across calls to the <code>ws-filter</code> function.
+<code>process</code> field holds the network process of the client and may
+be used by handlers to respond to requests.  The <code>headers</code> field
+holds an alist of information on the request for use by handlers.  The
+remaining <code>pending</code>, <code>context</code>, <code>boundary</code>,
+<code>index</code> and <code>active</code> fields are used to maintain header
+parsing information across calls to the <code>ws-filter</code> function.
 </p></dd></dl>
 
 <a name="Starting-and-Stopping-Servers"></a>

@@ -69,16 +69,41 @@ Next: <a href="Usage-Examples.html#Usage-Examples" accesskey="n" rel="next">Usag
 <h2 class="chapter">3 Requests</h2>
 <a name="index-requests"></a>
 
-<p>Each HTTP requests is represented using an <code>ws-request</code> object
-(see <a href="Function-Index.html#ws_002drequest">ws-request</a>).  The request object is used to decide which
-handler to call, and is passed as an argument to the called handler.
-The request object holds the network process, all HTTP headers, and
-any parameters.
+<p>Each HTTP requests is represented using a <code>ws-request</code> object
+(see <a href="Function-Index.html#ws_002drequest">ws-request</a>).  The request object serves two purposes, one
+internal and one external.  Internally, request objects are used to
+hold state while HTTP headers are parsed incrementally as the HTTP
+request text is received from the network.  Externally, request
+objects are used to decide which handler to call, and are then passed
+as the only argument to the called handler.
 </p>
-<p>The text of the request is parsed into an alist.  HTML Headers are
-keyed using uppercase keywords (e.g., <code>:GET</code>), and user supplied
-parameters are keyed using the string name of the parameter.
+<p>In addition to fields used internally, each <code>ws-request</code> object
+holds the network process in the <code>process</code> and holds all HTTP
+headers and request GET or POST parameters in the <code>headers</code>
+alist.  HTML Headers are keyed using uppercase keywords (e.g.,
+<code>:GET</code>), and user supplied parameters are keyed using the string
+name of the parameter.
 </p>
+<p>The <code>process</code> field may be used by handlers to send data to a
+client as in the following example.
+</p>
+<div class="example">
+<pre class="example">(process-send-string (process request) &quot;hello world&quot;)
+</pre></div>
+
+<p>The <code>headers</code> field may be used to access request information
+such as the requested path,
+</p>
+<div class="example">
+<pre class="example">(cdr (assoc :GET (headers request)))
+</pre></div>
+
+<p>or named parameters as from a web form.
+</p>
+<div class="example">
+<pre class="example">(cdr (assoc &quot;message&quot; (headers request)))
+</pre></div>
+
 
 
 
