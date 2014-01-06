@@ -155,7 +155,6 @@ Cache-Control: no-cache
 org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
           (ws-parse-request request)
           (let ((headers (cdr (headers request))))
-            (message "headers:%S" headers)
             (should (string= (cdr (assoc "path" headers)) "/complex.org"))
             (should (string= (cdr (assoc "beg" headers)) "646"))
             (should (string= (cdr (assoc "end" headers)) "667"))
