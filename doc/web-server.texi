@@ -159,7 +159,8 @@ These examples demonstrate usage.
 * URL Parameter Echo::          Echo Parameters from a URL query string
 * POST Echo::                   Echo POST parameters back
 * Basic Authentication::        BASIC HTTP Authentication
-* Org-mode Export Server::      Export files to HTML and Tex
+* Org-mode Export::             Export files to HTML and Tex
+* File Upload::                 Upload files and return their sha1sum
 @end menu
 
 @node Hello World, Hello World UTF8, Usage Examples, Usage Examples
@@ -228,7 +229,7 @@ in a @code{POST} request.
 
 @verbatiminclude ../examples/5-post-echo.el
 
-@node Basic Authentication, Org-mode Export Server, POST Echo, Usage Examples
+@node Basic Authentication, Org-mode Export, POST Echo, Usage Examples
 @section Basic Authentication
 
 The following example demonstrates BASIC HTTP authentication.  The
@@ -254,14 +255,33 @@ proxy server (e.g., Apache or Nginx) with HTTPS support.
 
 @verbatiminclude ../examples/6-basic-authentication.el
 
-@node Org-mode Export Server, Function Index, Basic Authentication, Usage Examples
-@section Org-mode Export Server
+@node Org-mode Export, File Upload, Basic Authentication, Usage Examples
+@section Org-mode Export
 
 The following example exports a directory of Org-mode files as either
 text, HTML or LaTeX.  The Org-mode export engine is used to export
 files on-demand as they are requested.
 
 @verbatiminclude ../examples/7-org-mode-file-server.el
+
+@node File Upload, Function Index, Org-mode Export, Usage Examples
+@section File Upload
+
+The following example demonstrates accessing an uploaded file.  This
+simple server accesses the file named ``file'' and returns it's
+sha1sum and file name.
+
+@verbatiminclude ../examples/8-file-upload.el
+
+A file may be uploaded from an HTML form, or using the @code{curl}
+program as in the following example.
+
+@example
+$ curl -s -F file=@/usr/share/emacs/24.3/etc/COPYING localhost:9008
+8624bcdae55baeef00cd11d5dfcfa60f68710a02  COPYING
+$ sha1sum /usr/share/emacs/24.3/etc/COPYING
+8624bcdae55baeef00cd11d5dfcfa60f68710a02  /usr/share/emacs/24.3/etc/COPYING
+@end example
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index

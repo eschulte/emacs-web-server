@@ -73,8 +73,11 @@
 (ert-deftest ws/parse-many-headers ()
   "Test that a number of headers parse successfully."
   (let ((server (ws-start nil ws-test-port))
-        (request (make-instance 'ws-request))
-        (header-string "GET / HTTP/1.1
+        (request (make-instance 'ws-request)))
+    (unwind-protect
+        (progn
+          (setf (pending request)
+                "GET / HTTP/1.1
 Host: localhost:7777
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
@@ -84,10 +87,8 @@ DNT: 1
 Cookie: __utma=111872281.1462392269.1345929539.1345929539.1345929539.1
 Connection: keep-alive
 
-"))
-    (unwind-protect
-        (progn
-          (ws-parse-request request header-string)
+")
+          (ws-parse-request request)
           (let ((headers (cdr (headers request))))
             (should (string= (cdr (assoc :ACCEPT-ENCODING headers))
                              "gzip, deflate"))
@@ -97,8 +98,11 @@ Connection: keep-alive
 
 (ert-deftest ws/parse-post-data ()
   (let ((server (ws-start nil ws-test-port))
-        (request (make-instance 'ws-request))
-        (header-string "POST / HTTP/1.1
+        (request (make-instance 'ws-request)))
+    (unwind-protect
+        (progn
+          (setf (pending request)
+                "POST / HTTP/1.1
 User-Agent: curl/7.33.0
 Host: localhost:8080
 Accept: */*
@@ -116,10 +120,8 @@ Content-Disposition: form-data; name=\"name\"
 
 \"schulte\"
 ------------------f1270d0deb77af03--
-"))
-    (unwind-protect
-        (progn
-          (ws-parse-request request header-string)
+")
+          (ws-parse-request request)
           (let ((headers (cdr (headers request))))
             (should (string= (cdr (assoc 'content (cdr (assoc "name" headers))))
                              "\"schulte\""))
@@ -130,8 +132,11 @@ Content-Disposition: form-data; name=\"name\"
 (ert-deftest ws/parse-another-post-data ()
   "This one from an AJAX request."
   (let ((server (ws-start nil ws-test-port))
-        (request (make-instance 'ws-request))
-        (header-string "POST /complex.org HTTP/1.1
+        (request (make-instance 'ws-request)))
+    (unwind-protect
+        (progn
+          (setf (pending request)
+                "POST /complex.org HTTP/1.1
 Host: localhost:4444
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
 Accept: */*
@@ -147,10 +152,8 @@ Connection: keep-alive
 Pragma: no-cache
 Cache-Control: no-cache
 
-org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))
-    (unwind-protect
-        (progn
-          (ws-parse-request request header-string)
+org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
+          (ws-parse-request request)
           (let ((headers (cdr (headers request))))
             (message "headers:%S" headers)
             (should (string= (cdr (assoc "path" headers)) "/complex.org"))
@@ -194,15 +197,16 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
   "Test that a number of headers parse successfully."
   (let* ((server (ws-start nil ws-test-port))
          (request (make-instance 'ws-request))
-         (username "foo") (password "bar")
-         (header-string (format "GET / HTTP/1.1
+         (username "foo") (password "bar"))
+    (unwind-protect
+        (progn
+          (setf (pending request)
+                (format "GET / HTTP/1.1
 Authorization: Basic %s
 Connection: keep-alive
 
-" (base64-encode-string (concat username ":" password)))))
-    (unwind-protect
-        (progn
-          (ws-parse-request request header-string)
+" (base64-encode-string (concat username ":" password))))
+          (ws-parse-request request)
           (with-slots (headers) request
             (cl-tree-equal (cdr (assoc :AUTHORIZATION headers))
                            (cons :BASIC (cons username password)))))
@@ -212,8 +216,12 @@ Connection: keep-alive
   "Test that `ws-parse-request' can handle at large file upload.
 At least when it comes in a single chunk."
   (let* ((long-string (mapconcat #'int-to-string (number-sequence 0 20000) " "))
-         (long-request
-          (format "POST / HTTP/1.1
+         (server (ws-start nil ws-test-port))
+         (request (make-instance 'ws-request)))
+    (unwind-protect
+        (progn
+          (setf (pending request)
+                (format "POST / HTTP/1.1
 User-Agent: curl/7.34.0
 Host: localhost:9008
 Accept: */*
@@ -229,12 +237,11 @@ Content-Type: application/octet-stream
 ------------------e458fb665704290b--
 
 " long-string))
-         (server (ws-start nil ws-test-port))
-         (request (make-instance 'ws-request)))
-    (unwind-protect
-        (progn (ws-parse-request request long-request)
-               (should (string= long-string
-                                (cdr (assoc 'content (cdr (assoc "file" (headers request))))))))
+          (ws-parse-request request)
+          (should
+           (string= long-string
+                    (cdr (assoc 'content
+                                (cdr (assoc "file" (headers request))))))))
       (ws-stop server))))
 
 (provide 'web-server-test)

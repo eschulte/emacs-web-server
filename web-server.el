@@ -45,6 +45,8 @@
    (pending  :initarg :pending  :accessor pending  :initform "")
    (context  :initarg :context  :accessor context  :initform nil)
    (boundary :initarg :boundary :accessor boundary :initform nil)
+   (index    :initarg :index    :accessor index    :initform 0)
+   (active   :initarg :active   :accessor active   :initform 0)
    (headers  :initarg :headers  :accessor headers  :initform (list nil))))
 
 (defvar ws-servers nil
@@ -201,28 +203,31 @@ function.
       (push (make-instance 'ws-request :process proc) requests))
     (let ((request (cl-find-if (lambda (c) (equal proc (process c))) requests)))
       (with-slots (pending) request (setq pending (concat pending string)))
-      (when (not (eq (catch 'close-connection
-                       (if (ws-parse-request request string)
-                           (ws-call-handler request handlers)
+      ;; if request is currently being parsed, just indicate new content
+      (if (> (active request) 0)
+          (incf (active request))
+        (when (not (eq (catch 'close-connection
+                         (if (progn (incf (active request))
+                                    (ws-parse-request request))
+                             (ws-call-handler request handlers)
                            :keep-open))
-                     :keep-open))
-        (setq requests (cl-remove-if (lambda (r) (eql proc (process r))) requests))
-        (delete-process proc)))))
+                       :keep-open))
+          (setq requests (cl-remove-if (lambda (r) (eql proc (process r))) requests))
+          (delete-process proc))))))
 
-(defun ws-parse-request (request string)
+(defun ws-parse-request (request)
   "Parse request STRING from REQUEST with process PROC.
 Return non-nil only when parsing is complete."
-  (with-slots (process pending context boundary headers) request
-    (setq pending (concat pending string))
-    (let ((delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
-          ;; Track progress through string, always work with the
-          ;; section of string between LAST-INDEX and INDEX.
-          (last-index 0) index)
-      (catch 'finished-parsing-headers
+  (catch 'finished-parsing-headers
+    (with-slots (process pending context boundary headers index) request
+      (let ((delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
+            ;; Track progress through string, always work with the
+            ;; section of string between INDEX and NEXT-INDEX.
+            next-index)
         ;; parse headers and append to request
-        (while (setq index (string-match delimiter pending last-index))
-          (let ((tmp (+ index (length delimiter))))
-            (if (= last-index index) ; double \r\n ends current run of headers
+        (while (setq next-index (string-match delimiter pending index))
+          (let ((tmp (+ next-index (length delimiter))))
+            (if (= index next-index) ; double \r\n ends current run of headers
                 (case context
                   ;; Parse URL data.
                   ;; http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4
@@ -231,7 +236,7 @@ Return non-nil only when parsing is complete."
                          (ws-parse-query-string
                           (replace-regexp-in-string
                            "\\+" " "
-                           (ws-trim (substring pending last-index)))))
+                           (ws-trim (substring pending index)))))
                    (throw 'finished-parsing-headers t))
                   ;; Set custom delimiter for multipart form data.
                   (multipart/form-data
@@ -242,14 +247,14 @@ Return non-nil only when parsing is complete."
                   (progn
                     (setcdr (last headers)
                             (list (ws-parse-multipart/form process
-                                   (substring pending last-index index))))
+                                                           (substring pending index next-index))))
                     ;; Boundary suffixed by "--" indicates end of the headers.
                     (when (and (> (length pending) (+ tmp 2))
                                (string= (substring pending tmp (+ tmp 2)) "--"))
                       (throw 'finished-parsing-headers t)))
                 ;; Standard header parsing.
                 (let ((header (ws-parse process (substring pending
-                                                            last-index index))))
+                                                           index next-index))))
                   ;; Content-Type indicates that the next double \r\n
                   ;; will be followed by a special type of content which
                   ;; will require special parsing.  Thus we will note
@@ -262,9 +267,10 @@ Return non-nil only when parsing is complete."
                         (setq context (intern (downcase type))))
                     ;; All other headers are collected directly.
                     (setcdr (last headers) header)))))
-            (setq last-index tmp)))
-        (setq pending (ws-trim (substring pending last-index)))
-        nil))))
+            (setq index tmp)))))
+    (decf (active request))
+    (when (> (active request) 0) (ws-parse-request request))
+    nil))
 
  (defun ws-call-handler (request handlers)
   (catch 'matched-handler
