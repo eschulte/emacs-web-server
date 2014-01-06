@@ -136,15 +136,40 @@ the handler function returns the keyword @code{:keep-alive}.
 @chapter Requests
 @cindex requests
 
-Each HTTP requests is represented using an @code{ws-request} object
-(@pxref{ws-request}).  The request object is used to decide which
-handler to call, and is passed as an argument to the called handler.
-The request object holds the network process, all HTTP headers, and
-any parameters.
+Each HTTP requests is represented using a @code{ws-request} object
+(@pxref{ws-request}).  The request object serves two purposes, one
+internal and one external.  Internally, request objects are used to
+hold state while HTTP headers are parsed incrementally as the HTTP
+request text is received from the network.  Externally, request
+objects are used to decide which handler to call, and are then passed
+as the only argument to the called handler.
 
-The text of the request is parsed into an alist.  HTML Headers are
-keyed using uppercase keywords (e.g., @code{:GET}), and user supplied
-parameters are keyed using the string name of the parameter.
+In addition to fields used internally, each @code{ws-request} object
+holds the network process in the @code{process} and holds all HTTP
+headers and request GET or POST parameters in the @code{headers}
+alist.  HTML Headers are keyed using uppercase keywords (e.g.,
+@code{:GET}), and user supplied parameters are keyed using the string
+name of the parameter.
+
+The @code{process} field may be used by handlers to send data to a
+client as in the following example.
+
+@example
+(process-send-string (process request) "hello world")
+@end example
+
+The @code{headers} field may be used to access request information
+such as the requested path,
+
+@example
+(cdr (assoc :GET (headers request)))
+@end example
+
+or named parameters as from a web form.
+
+@example
+(cdr (assoc "message" (headers request)))
+@end example
 
 @node Usage Examples, Hello World, Requests, Top
 @chapter Usage Examples
@@ -301,14 +326,14 @@ Each instance includes the @code{handlers} association list and
 @end deftp
 
 @anchor{ws-request}
-@deftp Class ws-request process pending context boundary headers
+@deftp Class ws-request process pending context boundary index active headers
 The @code{ws-request} class represents an active web request.  The
-@code{process} field holds the network process of the client machine
-and may be used by handlers to respond to requests.  The
-@code{headers} field holds an alist of information on the request for
-use by handlers.  The remaining @code{pending}, @code{context} and
-@code{boundary} fields are used to maintain header parsing information
-across calls to the @code{ws-filter} function.
+@code{process} field holds the network process of the client and may
+be used by handlers to respond to requests.  The @code{headers} field
+holds an alist of information on the request for use by handlers.  The
+remaining @code{pending}, @code{context}, @code{boundary},
+@code{index} and @code{active} fields are used to maintain header
+parsing information across calls to the @code{ws-filter} function.
 @end deftp
 
 @section Starting and Stopping Servers

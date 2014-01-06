@@ -46,7 +46,7 @@
    (context  :initarg :context  :accessor context  :initform nil)
    (boundary :initarg :boundary :accessor boundary :initform nil)
    (index    :initarg :index    :accessor index    :initform 0)
-   (active   :initarg :active   :accessor active   :initform 0)
+   (active   :initarg :active   :accessor active   :initform nil)
    (headers  :initarg :headers  :accessor headers  :initform (list nil))))
 
 (defvar ws-servers nil
@@ -203,12 +203,10 @@ function.
       (push (make-instance 'ws-request :process proc) requests))
     (let ((request (cl-find-if (lambda (c) (equal proc (process c))) requests)))
       (with-slots (pending) request (setq pending (concat pending string)))
-      ;; if request is currently being parsed, just indicate new content
-      (if (> (active request) 0)
-          (incf (active request))
+      (unless (active request) ; don't re-start if request is being parsed
+        (setf (active request) t)
         (when (not (eq (catch 'close-connection
-                         (if (progn (incf (active request))
-                                    (ws-parse-request request))
+                         (if (ws-parse-request request)
                              (ws-call-handler request handlers)
                            :keep-open))
                        :keep-open))
@@ -268,8 +266,7 @@ Return non-nil only when parsing is complete."
                     ;; All other headers are collected directly.
                     (setcdr (last headers) header)))))
             (setq index tmp)))))
-    (decf (active request))
-    (when (> (active request) 0) (ws-parse-request request))
+    (setf (active request) nil)
     nil))
 
  (defun ws-call-handler (request handlers)
