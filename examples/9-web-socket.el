@@ -7,17 +7,20 @@ var ws;
 function connect(){
   ws = new WebSocket(\"ws://localhost:9999/\");
 
-  ws.onopen    = function()    { alert(\"connected\"); ws.send(\"heyo\"); };
+  ws.onopen    = function()    { alert(\"connected\"); };
   ws.onmessage = function(msg) { alert(msg.data); };
   ws.onclose   = function()    { alert(\"connection closed\"); };
 }
 
 function message(){ ws.send(\"message\"); }
+
+function close(){ ws.close(); };
 </script>
 </head>
 <body>
 <a href=\"javascript:connect()\">connect</a>
 <a href=\"javascript:message()\">message</a>
+<a href=\"javascript:close()\">close</a>
 </body>
 </html>")
 
@@ -32,6 +35,7 @@ function message(){ ws.send(\"message\"); }
         (cons "Sec-WebSocket-Accept"
               (ws-web-socket-handshake
                (cdr (assoc :SEC-WEBSOCKET-KEY headers)))))
+      (set-process-coding-system process 'binary)
       (set-process-filter process 'ws-web-socket-filter)
       :keep-alive)
      (t

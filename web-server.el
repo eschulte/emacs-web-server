@@ -303,11 +303,85 @@ Return non-nil only when parsing is complete."
                         (apply #'format msg args)))))
     (apply #'ws-send-500 proc msg args)))
 
-;; TODO: http://tools.ietf.org/html/rfc6455#section-5.2
+
+;;; Web Socket
+
+;; Binary framing protocol
+;; from http://tools.ietf.org/html/rfc6455#section-5.2
+;;
+;;  0                   1                   2                   3
+;;  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+;; +-+-+-+-+-------+-+-------------+-------------------------------+
+;; |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+;; |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+;; |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+;; | |1|2|3|       |K|             |                               |
+;; +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+;; |     Extended payload length continued, if payload len == 127  |
+;; + - - - - - - - - - - - - - - - +-------------------------------+
+;; |                               |Masking-key, if MASK set to 1  |
+;; +-------------------------------+-------------------------------+
+;; | Masking-key (continued)       |          Payload Data         |
+;; +-------------------------------- - - - - - - - - - - - - - - - +
+;; :                     Payload Data continued ...                :
+;; + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+;; |                     Payload Data continued ...                |
+;; +---------------------------------------------------------------+
+;;
+(defun int-to-bits (int size)
+  (let ((result (make-bool-vector size nil)))
+    (mapc (lambda (place)
+            (let ((val (expt 2 place)))
+              (when (>= int val)
+                (setq int (- int val))
+                (aset result place t))))
+          (reverse (number-sequence 0 (- size 1))))
+    (reverse (coerce result 'list))))
+
+(defun bits-to-int (bits)
+  (let ((place 0))
+    (reduce #'+ (mapcar (lambda (bit)
+                          (prog1 (if bit (expt 2 place) 0) (incf place)))
+                        (reverse bits)))))
+
+(defun ws/web-socket-mask (masking-key data)
+  (let ((masking-data (apply #'concat (make-list (+ 1 (/ (length data) 4))
+                                                 masking-key))))
+    (apply #'string (cl-mapcar #'logxor masking-data data))))
+
 (defun ws-web-socket-filter (proc string)
   "Web socket filter to pass whole frames to the client.
 See RFC6455."
-  (message "ws:%S" string))
+  (let ((index 0))
+    (cl-flet ((bits (length)
+                    (apply #'append
+                           (mapcar (lambda (int) (int-to-bits int 8))
+                                   (subseq string index (incf index length))))))
+      (let (fin rsvs opcode mask pl mask-key data)
+        (let ((byte (bits 1)))
+          (setq fin (car byte)
+                rsvs (subseq byte 1 4)
+                opcode (let ((it (bits-to-int (subseq byte 4))))
+                         (case it
+                           (0 :CONTINUATION)
+                           (1 :TEXT)
+                           (2 :BINARY)
+                           ((3 4 5 6 7) :NON-CONTROL)
+                           (9 :PING)
+                           (10 :PONG)
+                           ((11 12 13 14 15) :CONTROL)
+                           (t (ws-error proc "Bad opcode %d" ))))))
+        (let ((byte (bits 1)))
+          (setq mask (car byte)
+                pl (bits-to-int (subseq byte 1))))
+        (cond
+         ((= pl 126) (setq pl (bits-to-int (bits 2))))
+         ((= pl 127) (setq pl (bits-to-int (bits 8)))))
+        (when mask (setq mask-key (subseq string index (incf index 4))))
+        (setq data (subseq string index (+ index pl)))
+        (message "fin:%s rsvs:%s opcode:%s mask-key:%s mask:%s pl:%s data:%S"
+                 fin rsvs opcode mask mask-key pl
+                 (ws/web-socket-mask mask-key data))))))
 
 
 ;;; Convenience functions to write responses
