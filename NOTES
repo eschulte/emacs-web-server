@@ -1,7 +1,18 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [10/20]
+* Tasks [10/24]
+** more examples [0/4]
+*** TODO Org-mode agenda
+Already exists as part of org-ehtml.
+
+*** TODO display the current buffer
+Idea stolen from elnode.
+
+*** TODO browse the BBDB
+*** TODO browse available ELPA packages
+Also took this idea from elnode.
+
 ** DONE handle large files
 When large files arrive quickly, the filter functions are called while
 they are still running on the previous chunk, this leads to nasty race
