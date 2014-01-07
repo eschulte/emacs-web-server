@@ -305,6 +305,29 @@ Return non-nil only when parsing is complete."
 
 
 ;;; Web Socket
+(defvar ws/web-socket-handler nil
+  "Function to handle web-socket messages, should take a single argument.")
+
+(defun int-to-bits (int size)
+  (let ((result (make-bool-vector size nil)))
+    (mapc (lambda (place)
+            (let ((val (expt 2 place)))
+              (when (>= int val)
+                (setq int (- int val))
+                (aset result place t))))
+          (reverse (number-sequence 0 (- size 1))))
+    (reverse (coerce result 'list))))
+
+(defun bits-to-int (bits)
+  (let ((place 0))
+    (reduce #'+ (mapcar (lambda (bit)
+                          (prog1 (if bit (expt 2 place) 0) (incf place)))
+                        (reverse bits)))))
+
+(defun ws/web-socket-mask (masking-key data)
+  (let ((masking-data (apply #'concat (make-list (+ 1 (/ (length data) 4))
+                                                 masking-key))))
+    (apply #'string (cl-mapcar #'logxor masking-data data))))
 
 ;; Binary framing protocol
 ;; from http://tools.ietf.org/html/rfc6455#section-5.2
@@ -328,27 +351,6 @@ Return non-nil only when parsing is complete."
 ;; |                     Payload Data continued ...                |
 ;; +---------------------------------------------------------------+
 ;;
-(defun int-to-bits (int size)
-  (let ((result (make-bool-vector size nil)))
-    (mapc (lambda (place)
-            (let ((val (expt 2 place)))
-              (when (>= int val)
-                (setq int (- int val))
-                (aset result place t))))
-          (reverse (number-sequence 0 (- size 1))))
-    (reverse (coerce result 'list))))
-
-(defun bits-to-int (bits)
-  (let ((place 0))
-    (reduce #'+ (mapcar (lambda (bit)
-                          (prog1 (if bit (expt 2 place) 0) (incf place)))
-                        (reverse bits)))))
-
-(defun ws/web-socket-mask (masking-key data)
-  (let ((masking-data (apply #'concat (make-list (+ 1 (/ (length data) 4))
-                                                 masking-key))))
-    (apply #'string (cl-mapcar #'logxor masking-data data))))
-
 (defun ws-web-socket-filter (proc string)
   "Web socket filter to pass whole frames to the client.
 See RFC6455."
@@ -404,17 +406,43 @@ See RFC6455."
           ;; set to inactive
           (set-process-plist proc (plist-put (process-plist proc) :active nil))
           (if fin
-              ;; call the web-socket handler
-              (message "received message %S" data)
+              (funcall ws/web-socket-handler data) ; call the web-socket handler
             ;; add parsed data to the process plist
             (let ((plist (process-plist proc)))
               (set-process-plist
                (plist-put plist :parsed (concat (plist-get plist :parsed)
                                                 data))))
-            ;; possibly parse pending input
+            ;; add any remaining un-parsed network data to pending
+            (when (< (+ index pl) (length string))
+              (let ((plist (process-plist proc)))
+                (set-process-plist
+                 (plist-put plist :pending
+                            (concat (substring string (+ index pl))
+                                    (or (plist-get plist :pending) ""))))))
+            ;; possibly re-parse any pending input
             (when (plist-get (process-plist proc) :pending)
+              (set-process-plist (plist-put (process-plist proc) :pending nil))
               (ws-web-socket-filter
-               proc (plist-get (process-plist proc) :pending)))))))))
+               proc (plist-get (process-plist proc) :pending)))
+            nil))))))
+
+(defmacro ws/web-socket-messages-do (headers variable body)
+  "Helper macro to set the `ws-web-socket-filter' appropriately."
+  `(when (assoc :SEC-WEBSOCKET-KEY ,(identity headers))
+     (ws-response-header process 101
+       (cons "Upgrade" "websocket")
+       (cons "Connection" "upgrade")
+       (cons "Sec-WebSocket-Accept"
+             (ws-web-socket-handshake
+              (cdr (assoc :SEC-WEBSOCKET-KEY headers)))))
+     (set-process-plist process (list :parsed "" :pending nil :active nil))
+     (set-process-coding-system process 'binary)
+     (lexical-let ((ws/web-socket-handler (lambda ,(list variable) ,@body)))
+       (set-process-filter process 'ws-web-socket-filter))
+     (throw 'close-connection :keep-alive)))
+
+(defun ws/web-socket-send (string)
+  )
 
 
 ;;; Convenience functions to write responses
