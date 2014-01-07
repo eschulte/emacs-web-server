@@ -352,44 +352,69 @@ Return non-nil only when parsing is complete."
 (defun ws-web-socket-filter (proc string)
   "Web socket filter to pass whole frames to the client.
 See RFC6455."
-  (let ((index 0))
-    (cl-flet ((bits (length)
-                    (apply #'append
-                           (mapcar (lambda (int) (int-to-bits int 8))
-                                   (subseq string index (incf index length))))))
-      (let ((data (plist-get (process-plist proc) :pending))
-            fin rsvs opcode mask pl mask-key)
-        (let ((byte (bits 1)))
-          (setq fin (car byte)
-                rsvs (subseq byte 1 4)
-                opcode (let ((it (bits-to-int (subseq byte 4))))
-                         (case it
-                           (0 :CONTINUATION)
-                           (1 :TEXT)
-                           (2 :BINARY)
-                           ((3 4 5 6 7) :NON-CONTROL)
-                           (9 :PING)
-                           (10 :PONG)
-                           ((11 12 13 14 15) :CONTROL)
-                           (t (ws-error proc "Web Socket Fail: bad opcode %d"
-                                        it))))))
-        (unless (cl-every #'null rsvs)
-          (ws-error proc "Web Socket Fail: non-zero RSV 1 2 or 3"))
-        (let ((byte (bits 1)))
-          (setq mask (car byte)
-                pl (bits-to-int (subseq byte 1))))
-        (unless (eq mask t)
-          (ws-error proc "Web Socket Fail: client must mask data"))
-        (cond
-         ((= pl 126) (setq pl (bits-to-int (bits 2))))
-         ((= pl 127) (setq pl (bits-to-int (bits 8)))))
-        (when mask (setq mask-key (subseq string index (incf index 4))))
-        (setq data (concat data
-                           (ws/web-socket-mask
-                            mask-key (subseq string index (+ index pl)))))
-        (if fin
-            (message "received message %S" data)
-          (set-process-plist proc (list :data data)))))))
+  (catch 'wait ; TODO: this needs more complete partial input handling
+    (when (plist-get (process-plist proc) :active)
+      (let ((pending (plist-get (process-plist proc) :pending)))
+        (set-process-plist proc
+                           (plist-put (process-plist proc)
+                                      :pending (concat pending string))))
+      (throw 'wait nil))
+    ;; set to active
+    (set-process-plist proc (plist-put (process-plist proc) :active t))
+    (let ((index 0))
+      (cl-flet ((bits (length)
+                      (apply #'append
+                             (mapcar (lambda (int) (int-to-bits int 8))
+                                     (subseq string index (incf index length))))))
+        (let ((data (plist-get (process-plist proc) :parsed))
+              fin rsvs opcode mask pl mask-key)
+          (let ((byte (bits 1)))
+            (setq fin (car byte)
+                  rsvs (subseq byte 1 4)
+                  opcode
+                  (let ((it (bits-to-int (subseq byte 4))))
+                    (case it
+                      (0 :CONTINUATION)
+                      (1 :TEXT)
+                      (2 :BINARY)
+                      ((3 4 5 6 7) :NON-CONTROL)
+                      (9 :PING)
+                      (10 :PONG)
+                      ((11 12 13 14 15) :CONTROL)
+                      ;; If an unknown opcode is received, the receiving
+                      ;; endpoint MUST _Fail the WebSocket Connection_.
+                      (t (ws-error proc "Web Socket Fail: bad opcode %d" it))))))
+          (unless (cl-every #'null rsvs)
+            ;; MUST be 0 unless an extension is negotiated that defines
+            ;; meanings for non-zero values.
+            (ws-error proc "Web Socket Fail: non-zero RSV 1 2 or 3"))
+          (let ((byte (bits 1)))
+            (setq mask (car byte)
+                  pl (bits-to-int (subseq byte 1))))
+          (unless (eq mask t)
+            ;; All frames sent from client to server have this bit set to 1.
+            (ws-error proc "Web Socket Fail: client must mask data"))
+          (cond
+           ((= pl 126) (setq pl (bits-to-int (bits 2))))
+           ((= pl 127) (setq pl (bits-to-int (bits 8)))))
+          (when mask (setq mask-key (subseq string index (incf index 4))))
+          (setq data (concat data
+                             (ws/web-socket-mask
+                              mask-key (subseq string index (+ index pl)))))
+          ;; set to inactive
+          (set-process-plist proc (plist-put (process-plist proc) :active nil))
+          (if fin
+              ;; call the web-socket handler
+              (message "received message %S" data)
+            ;; add parsed data to the process plist
+            (let ((plist (process-plist proc)))
+              (set-process-plist
+               (plist-put plist :parsed (concat (plist-get plist :parsed)
+                                                data))))
+            ;; possibly parse pending input
+            (when (plist-get (process-plist proc) :pending)
+              (ws-web-socket-filter
+               proc (plist-get (process-plist proc) :pending)))))))))
 
 
 ;;; Convenience functions to write responses
