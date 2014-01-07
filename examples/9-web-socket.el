@@ -35,6 +35,7 @@ function close(){ ws.close(); };
         (cons "Sec-WebSocket-Accept"
               (ws-web-socket-handshake
                (cdr (assoc :SEC-WEBSOCKET-KEY headers)))))
+      (set-process-plist process (list :pending ""))
       (set-process-coding-system process 'binary)
       (set-process-filter process 'ws-web-socket-filter)
       :keep-alive)

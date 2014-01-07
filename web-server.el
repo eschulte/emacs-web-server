@@ -357,7 +357,8 @@ See RFC6455."
                     (apply #'append
                            (mapcar (lambda (int) (int-to-bits int 8))
                                    (subseq string index (incf index length))))))
-      (let (fin rsvs opcode mask pl mask-key data)
+      (let ((data (plist-get (process-plist proc) :pending))
+            fin rsvs opcode mask pl mask-key)
         (let ((byte (bits 1)))
           (setq fin (car byte)
                 rsvs (subseq byte 1 4)
@@ -370,18 +371,25 @@ See RFC6455."
                            (9 :PING)
                            (10 :PONG)
                            ((11 12 13 14 15) :CONTROL)
-                           (t (ws-error proc "Bad opcode %d" ))))))
+                           (t (ws-error proc "Web Socket Fail: bad opcode %d"
+                                        it))))))
+        (unless (cl-every #'null rsvs)
+          (ws-error proc "Web Socket Fail: non-zero RSV 1 2 or 3"))
         (let ((byte (bits 1)))
           (setq mask (car byte)
                 pl (bits-to-int (subseq byte 1))))
+        (unless (eq mask t)
+          (ws-error proc "Web Socket Fail: client must mask data"))
         (cond
          ((= pl 126) (setq pl (bits-to-int (bits 2))))
          ((= pl 127) (setq pl (bits-to-int (bits 8)))))
         (when mask (setq mask-key (subseq string index (incf index 4))))
-        (setq data (subseq string index (+ index pl)))
-        (message "fin:%s rsvs:%s opcode:%s mask-key:%s mask:%s pl:%s data:%S"
-                 fin rsvs opcode mask mask-key pl
-                 (ws/web-socket-mask mask-key data))))))
+        (setq data (concat data
+                           (ws/web-socket-mask
+                            mask-key (subseq string index (+ index pl)))))
+        (if fin
+            (message "received message %S" data)
+          (set-process-plist proc (list :data data)))))))
 
 
 ;;; Convenience functions to write responses
