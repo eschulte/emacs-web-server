@@ -339,7 +339,7 @@ received and parsed from the network."
        process (list :message (make-instance 'ws-message
                                 :handler handler :process process)))
       (set-process-filter process 'ws-web-socket-filter)
-      (throw 'close-connection :keep-alive))))
+      process)))
 
 (defun ws-web-socket-filter (process string)
   (let ((message (plist-get (process-plist process) :message)))
@@ -445,15 +445,28 @@ See RFC6455."
               ;; wipe the message state and call the handler
               (let ((it data))
                 (setq data "" active nil pending "" new nil)
-                (funcall handler it))
+                (funcall handler process it))
             ;; add any remaining un-parsed network data to pending
             (when (< (+ index pl) (length pending))
               (setq pending (substring pending (+ index pl)))))))
       ;; possibly re-parse any pending input
       (when (new message) (ws-web-socket-parse-messages message)))))
 
-(defun ws-web-socket-send (string)
-  (message "TODO: send %S" string))
+(defun ws-web-socket-frame (string &optional opcode)
+  "Frame STRING for web socket communication."
+  (let* ((fin 1) ;; set to 0 if not final frame
+         (len (length string))
+         (pl  (cond ((< len 126) len)
+                    ((< len (expt 2 16)) 126)
+                    (t (ws-error process "TODO: messages of length %d" len))))
+         (opcode (ecase (or opcode :TEXT) (:TEXT 1) (:BINARY 2))))
+    ;; for now we won't do any masking, as it isn't required.  We'll
+    ;; also leave the rsv{1,2,3} flags all set to 0.
+    (format "%c%c%s%s"
+            (logior (lsh fin 7) opcode)
+            pl
+            (if (= pl 126) (logand (lsh v -8) 255) "")
+            string)))
 
 
 ;;; Convenience functions to write responses
