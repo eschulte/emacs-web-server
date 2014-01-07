@@ -1,7 +1,11 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [10/24]
+* Tasks [10/25]
+** TODO web sockets
+- http://en.wikipedia.org/wiki/WebSocket
+- http://tools.ietf.org/html/rfc6455
+
 ** more examples [0/4]
 *** TODO Org-mode agenda
 Already exists as part of org-ehtml.
@@ -134,7 +138,7 @@ e.g., parameter strings
 - [X] parse urlencoded post data
 - [X] think about defaulting to (name . content) for form elements
 - [X] maybe don't require a non-nil return to cancel the connection,
-      instead only keep open if :keep-open is returned
+      instead only keep open if =:keep-alive= is returned
 - [X] function to send a file (with mime handling)
 - [X] send a 404 with some default text
 

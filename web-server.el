@@ -55,6 +55,9 @@
 (defvar ws-log-time-format "%Y.%m.%d.%H.%M.%S.%N"
   "Logging time format passed to `format-time-string'.")
 
+(defvar ws-guid "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+  "This GUID is defined in RFC6455.")
+
 ;;;###autoload
 (defun ws-start (handlers port &optional log-buffer &rest network-args)
   "Start a server using HANDLERS and return the server object.
@@ -208,8 +211,8 @@ function.
         (when (not (eq (catch 'close-connection
                          (if (ws-parse-request request)
                              (ws-call-handler request handlers)
-                           :keep-open))
-                       :keep-open))
+                           :keep-alive))
+                       :keep-alive))
           (setq requests (cl-remove-if (lambda (r) (eql proc (process r))) requests))
           (delete-process proc))))))
 
@@ -245,7 +248,7 @@ Return non-nil only when parsing is complete."
                   (progn
                     (setcdr (last headers)
                             (list (ws-parse-multipart/form process
-                                                           (substring pending index next-index))))
+                                    (substring pending index next-index))))
                     ;; Boundary suffixed by "--" indicates end of the headers.
                     (when (and (> (length pending) (+ tmp 2))
                                (string= (substring pending tmp (+ tmp 2)) "--"))
@@ -300,16 +303,22 @@ Return non-nil only when parsing is complete."
                         (apply #'format msg args)))))
     (apply #'ws-send-500 proc msg args)))
 
+;; TODO: http://tools.ietf.org/html/rfc6455#section-5.2
+(defun ws-web-socket-filter (proc string)
+  "Web socket filter to pass whole frames to the client.
+See RFC6455."
+  (message "ws:%S" string))
+
 
 ;;; Convenience functions to write responses
-(defun ws-response-header (proc code &rest header)
+(defun ws-response-header (proc code &rest headers)
   "Send the headers for an HTTP response to PROC.
 Currently CODE should be an HTTP status code, see
 `ws-status-codes' for a list of known codes."
   (let ((headers
          (cons
           (format "HTTP/1.1 %d %s" code (cdr (assoc code ws-status-codes)))
-          (mapcar (lambda (h) (format "%s: %s" (car h) (cdr h))) header))))
+          (mapcar (lambda (h) (format "%s: %s" (car h) (cdr h))) headers))))
     (setcdr (last headers) (list "" ""))
     (process-send-string proc (mapconcat #'identity headers "\r\n"))))
 
@@ -351,6 +360,10 @@ If so return PATH, if not return nil."
     (and (>= (length expanded) (length parent))
          (string= parent (substring expanded 0 (length parent)))
          expanded)))
+
+(defun ws-web-socket-handshake (key)
+  "Perform the handshake defined in RFC6455."
+  (base64-encode-string (sha1 (concat (ws-trim key) ws-guid) nil nil 'binary)))
 
 (provide 'web-server)
 ;;; web-server.el ends here

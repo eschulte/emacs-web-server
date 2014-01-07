@@ -243,4 +243,9 @@ Content-Type: application/octet-stream
                                 (cdr (assoc "file" (headers request))))))))
       (ws-stop server))))
 
+(ert-deftest ws/web-socket-handshake-rfc-example ()
+  "Ensure that `ws-web-socket-handshake' conforms to the example in RFC6455."
+  (should (string= (ws-web-socket-handshake "dGhlIHNhbXBsZSBub25jZQ==")
+                   "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")))
+
 (provide 'web-server-test)
