@@ -11,7 +11,7 @@
 ;; A web server in Emacs running handlers written in Emacs Lisp.
 ;;
 ;; Full support for GET and POST requests including URL-encoded
-;; parameters and multipart/form data.
+;; parameters and multipart/form data.  Supports web sockets.
 ;;
 ;; See the examples/ directory for examples demonstrating the usage of
 ;; the Emacs Web Server.  The following launches a simple "hello
@@ -397,34 +397,35 @@ received and parsed from the network."
 (defun ws-web-socket-parse-messages (message)
   "Web socket filter to pass whole frames to the client.
 See RFC6455."
-  (let ((index 0))
-    (cl-labels ((int-to-bits (int size)
-                  (let ((result (make-bool-vector size nil)))
-                    (mapc (lambda (place)
-                            (let ((val (expt 2 place)))
-                              (when (>= int val)
-                                (setq int (- int val))
-                                (aset result place t))))
-                          (reverse (number-sequence 0 (- size 1))))
-                    (reverse (coerce result 'list))))
-                (bits-to-int (bits)
-                  (let ((place 0))
-                    (reduce #'+
-                      (mapcar (lambda (bit)
-                                (prog1 (if bit (expt 2 place) 0) (incf place)))
-                              (reverse bits)))))
-                (bits (length)
-                  (apply #'append
-                         (mapcar (lambda (int) (int-to-bits int 8))
-                                 (subseq string index (incf index length))))))
-      (with-slots (process pending data handler new) message
+  (with-slots (process active pending data handler new) message
+    (let ((index 0))
+      (cl-labels ((int-to-bits (int size)
+                    (let ((result (make-bool-vector size nil)))
+                      (mapc (lambda (place)
+                              (let ((val (expt 2 place)))
+                                (when (>= int val)
+                                  (setq int (- int val))
+                                  (aset result place t))))
+                            (reverse (number-sequence 0 (- size 1))))
+                      (reverse (append result nil))))
+                  (bits-to-int (bits)
+                    (let ((place 0))
+                      (apply #'+
+                       (mapcar (lambda (bit)
+                                 (prog1 (if bit (expt 2 place) 0) (incf place)))
+                               (reverse bits)))))
+                  (bits (length)
+                    (apply #'append
+                           (mapcar (lambda (int) (int-to-bits int 8))
+                                   (cl-subseq
+                                    pending index (incf index length))))))
         (let (fin rsvs opcode mask pl mask-key)
           ;; Parse fin bit, rsvs bits and opcode
           (let ((byte (bits 1)))
             (setq fin (car byte)
-                  rsvs (subseq byte 1 4)
+                  rsvs (cl-subseq byte 1 4)
                   opcode
-                  (let ((it (bits-to-int (subseq byte 4))))
+                  (let ((it (bits-to-int (cl-subseq byte 4))))
                     (case it
                       (0 :CONTINUATION)
                       (1 :TEXT)
@@ -445,7 +446,7 @@ See RFC6455."
           ;; Parse mask and payload length
           (let ((byte (bits 1)))
             (setq mask (car byte)
-                  pl (bits-to-int (subseq byte 1))))
+                  pl (bits-to-int (cl-subseq byte 1))))
           (unless (eq mask t)
             ;; All frames sent from client to server have this bit set to 1.
             (ws-error process "Web Socket Fail: client must mask data"))
@@ -453,10 +454,10 @@ See RFC6455."
            ((= pl 126) (setq pl (bits-to-int (bits 2))))
            ((= pl 127) (setq pl (bits-to-int (bits 8)))))
           ;; unmask data
-          (when mask (setq mask-key (subseq string index (incf index 4))))
+          (when mask (setq mask-key (cl-subseq pending index (incf index 4))))
           (setq data (concat data
                              (ws-web-socket-mask
-                              mask-key (subseq string index (+ index pl)))))
+                              mask-key (cl-subseq pending index (+ index pl)))))
           (if fin
               ;; wipe the message state and call the handler
               (let ((it data))

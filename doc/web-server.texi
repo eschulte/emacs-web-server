@@ -181,11 +181,12 @@ These examples demonstrate usage.
 * Hello World UTF8::            Serve ``Hello World'' w/UTF8 encoding
 * Hello World HTML::            Serve ``Hello World'' in HTML
 * File Server::                 Serve files from a document root
-* URL Parameter Echo::          Echo Parameters from a URL query string
+* URL Parameter Echo::          Echo parameters from a URL query string
 * POST Echo::                   Echo POST parameters back
-* Basic Authentication::        BASIC HTTP Authentication
+* Basic Authentication::        BASIC HTTP authentication
 * Org-mode Export::             Export files to HTML and Tex
 * File Upload::                 Upload files and return their sha1sum
+* Web Socket::                  Web socket echo server
 @end menu
 
 @node Hello World, Hello World UTF8, Usage Examples, Usage Examples
@@ -289,7 +290,7 @@ files on-demand as they are requested.
 
 @verbatiminclude ../examples/7-org-mode-file-server.el
 
-@node File Upload, Function Index, Org-mode Export, Usage Examples
+@node File Upload, Web Socket, Org-mode Export, Usage Examples
 @section File Upload
 
 The following example demonstrates accessing an uploaded file.  This
@@ -307,6 +308,33 @@ $ curl -s -F file=@/usr/share/emacs/24.3/etc/COPYING localhost:9008
 $ sha1sum /usr/share/emacs/24.3/etc/COPYING
 8624bcdae55baeef00cd11d5dfcfa60f68710a02  /usr/share/emacs/24.3/etc/COPYING
 @end example
+
+@node Web Socket, Function Index, File Upload, Usage Examples
+@section Web Socket
+
+Example demonstrating the use of web sockets for full duplex
+communication between clients and the server.  Handlers may use the
+@code{ws-web-socket-connect} function (@pxref{ws-web-socket-connect})
+to check for and respond to a web socket upgrade request sent by the
+client (as demonstrated with the @code{new WebSocket} JavaScript code
+in the example).  Upon successfully initializing a web socket
+connection the call to @code{ws-web-socket-connect} will return the
+web socket network process.  This process may then be used by the
+server to communicate with the client over the web socket using the
+@code{process-send-string} and @code{ws-web-socket-frame} functions.
+All web socket communication must be wrapped in frames using the
+@code{ws-web-socket-frame} function.
+
+The handler must pass a function as the second argument to
+@code{ws-web-socket-connect}.  This function will be called on every
+web socket message received from the client.
+
+@noindent
+Note: in order to keep the web socket connection alive the request
+handler from which @code{ws-web-socket-connect} is called must return
+the @code{:keep-alive} keyword, as demonstrated in the example.
+
+@verbatiminclude ../examples/9-web-socket.el
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index
@@ -423,6 +451,22 @@ Check if @code{path} is under the @code{parent} directory.
 
 (ws-in-directory-p "/tmp/" "~/pics")
     @result{} nil
+@end example
+@end defun
+
+@anchor{ws-web-socket-connect}
+@defun ws-web-socket-connect request handler
+If @code{request} is a web socket upgrade request (indicated by the
+presence of the @code{:SEC-WEBSOCKET-KEY} header argument) establish a
+web socket connection to the client.  Call @code{handler} on web
+socket messages received from the client.
+
+@example
+(ws-web-socket-connect request
+  (lambda (proc string)
+    (process-send-string proc
+      (ws-web-socket-frame (concat "you said: " string)))))
+    @result{} #<process ws-server <127.0.0.1:34921>>
 @end example
 @end defun
 

@@ -50,12 +50,8 @@ function close(){ ws.close(); };
          ;; if a web-socket request, then connect and keep open
          (if (ws-web-socket-connect request
                (lambda (proc string)
-                 (message "received:%S" string)
-                 (let ((reply ))
-                   (process-send-string proc
-                     (ws-web-socket-frame (concat "you said: " string)))
-                   (sit-for 5))
-                 :keep-alive))
+                 (process-send-string proc
+                   (ws-web-socket-frame (concat "you said: " string)))))
              (prog1 :keep-alive (setq my-connection process))
            ;; otherwise send the index page
            (ws-response-header process 200 '("Content-type" . "text/html"))
