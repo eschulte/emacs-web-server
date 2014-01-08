@@ -305,6 +305,21 @@ Return non-nil only when parsing is complete."
 
 
 ;;; Web Socket
+;; Implement to conform to http://tools.ietf.org/html/rfc6455.
+
+;; The `ws-message' object is used to hold state across multiple calls
+;; of the process filter on the websocket network process.  The fields
+;; play the following roles.
+;; process ------ holds the process itself, used for communication
+;; pending ------ holds text received from the client but not yet parsed
+;; active ------- indicates that parsing is active to avoid re-entry
+;;                of the `ws-web-socket-parse-messages' function
+;; new ---------- indicates that new text was received during parsing
+;;                and causes `ws-web-socket-parse-messages' to be
+;;                called again after it terminates
+;; data --------- holds the data of parsed messages
+;; handler ------ holds the user-supplied function used called on the
+;;                data of parsed messages
 (defclass ws-message ()                 ; web socket message object
   ((process  :initarg :process  :accessor process  :initform "")
    (pending  :initarg :pending  :accessor pending  :initform "")
@@ -343,29 +358,14 @@ received and parsed from the network."
 
 (defun ws-web-socket-filter (process string)
   (let ((message (plist-get (process-plist process) :message)))
-    ;; don't re-start if message is being parsed
-    (if (active message)
+    (if (active message) ; don't re-start if message is being parsed
         (setf (new message) string)
       (setf (pending message) (concat (pending message) string))
       (setf (active message) t)
       (ws-web-socket-parse-messages message))
     (setf (active message) nil)))
 
-(defun int-to-bits (int size)
-  (let ((result (make-bool-vector size nil)))
-    (mapc (lambda (place)
-            (let ((val (expt 2 place)))
-              (when (>= int val)
-                (setq int (- int val))
-                (aset result place t))))
-          (reverse (number-sequence 0 (- size 1))))
-    (reverse (coerce result 'list))))
 
-(defun bits-to-int (bits)
-  (let ((place 0))
-    (reduce #'+ (mapcar (lambda (bit)
-                          (prog1 (if bit (expt 2 place) 0) (incf place)))
-                        (reverse bits)))))
 
 (defun ws-web-socket-mask (masking-key data)
   (let ((masking-data (apply #'concat (make-list (+ 1 (/ (length data) 4))
@@ -398,10 +398,25 @@ received and parsed from the network."
   "Web socket filter to pass whole frames to the client.
 See RFC6455."
   (let ((index 0))
-    (cl-flet ((bits (length)
-                    (apply #'append
-                           (mapcar (lambda (int) (int-to-bits int 8))
-                                   (subseq string index (incf index length))))))
+    (cl-labels ((int-to-bits (int size)
+                  (let ((result (make-bool-vector size nil)))
+                    (mapc (lambda (place)
+                            (let ((val (expt 2 place)))
+                              (when (>= int val)
+                                (setq int (- int val))
+                                (aset result place t))))
+                          (reverse (number-sequence 0 (- size 1))))
+                    (reverse (coerce result 'list))))
+                (bits-to-int (bits)
+                  (let ((place 0))
+                    (reduce #'+
+                      (mapcar (lambda (bit)
+                                (prog1 (if bit (expt 2 place) 0) (incf place)))
+                              (reverse bits)))))
+                (bits (length)
+                  (apply #'append
+                         (mapcar (lambda (int) (int-to-bits int 8))
+                                 (subseq string index (incf index length))))))
       (with-slots (process pending data handler new) message
         (let (fin rsvs opcode mask pl mask-key)
           ;; Parse fin bit, rsvs bits and opcode
@@ -415,6 +430,7 @@ See RFC6455."
                       (1 :TEXT)
                       (2 :BINARY)
                       ((3 4 5 6 7) :NON-CONTROL)
+                      (8 :CLOSE)
                       (9 :PING)
                       (10 :PONG)
                       ((11 12 13 14 15) :CONTROL)
@@ -445,7 +461,11 @@ See RFC6455."
               ;; wipe the message state and call the handler
               (let ((it data))
                 (setq data "" active nil pending "" new nil)
-                (funcall handler process it))
+                ;; close on a close frame, otherwise call the handler
+                (if (not (eql opcode :CLOSE))
+                    (funcall handler process it)
+                  (process-send-string process
+                    (unibyte-string (logior (lsh 1 7) 8) 0))))
             ;; add any remaining un-parsed network data to pending
             (when (< (+ index pl) (length pending))
               (setq pending (substring pending (+ index pl)))))))
@@ -456,17 +476,26 @@ See RFC6455."
   "Frame STRING for web socket communication."
   (let* ((fin 1) ;; set to 0 if not final frame
          (len (length string))
-         (pl  (cond ((< len 126) len)
-                    ((< len (expt 2 16)) 126)
-                    (t (ws-error process "TODO: messages of length %d" len))))
          (opcode (ecase (or opcode :TEXT) (:TEXT 1) (:BINARY 2))))
-    ;; for now we won't do any masking, as it isn't required.  We'll
-    ;; also leave the rsv{1,2,3} flags all set to 0.
-    (format "%c%c%s%s"
-            (logior (lsh fin 7) opcode)
-            pl
-            (if (= pl 126) (logand (lsh v -8) 255) "")
-            string)))
+    ;; Does not do any masking which is only required of client communication
+    (concat
+     (cond
+      ((< len 126) (unibyte-string (logior (lsh fin 7) opcode) len))
+      ((= len 126) (unibyte-string (logior (lsh fin 7) opcode) 126
+                                   ;; extended 16-bit length
+                                   (logand (lsh len -8) 255)
+                                   (logand      len     255)))
+      ((> len 126) (unibyte-string (logior (lsh fin 7) opcode) 127
+                                   ;; more extended 64-bit length
+                                   (logand (lsh len -56) 255)
+                                   (logand (lsh len -48) 255)
+                                   (logand (lsh len -40) 255)
+                                   (logand (lsh len -32) 255)
+                                   (logand (lsh len -24) 255)
+                                   (logand (lsh len -16) 255)
+                                   (logand (lsh len -8)  255)
+                                   (logand      len      255))))
+     string)))
 
 
 ;;; Convenience functions to write responses
