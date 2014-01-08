@@ -9,14 +9,14 @@
 ** more examples [3/3]
 *** DONE Org-mode agenda
 Already exists as part of org-ehtml.
-file:examples/11-org-agenda.el
+file:examples/011-org-agenda.el
 
 *** DONE display the current buffer
 Idea stolen from elnode.
-file:examples/10-current-buffer.el
+file:examples/010-current-buffer.el
 
 *** DONE browse the BBDB
-file:examples/12-search-bbdb.el
+file:examples/012-search-bbdb.el
 
 ** DONE handle large files
 When large files arrive quickly, the filter functions are called while

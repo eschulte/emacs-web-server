@@ -199,7 +199,7 @@ the content type to @code{text/plain}, and then sending the string
 ``hello world''.  When the handler exits the network connection of the
 request is closed.
 
-@verbatiminclude ../examples/0-hello-world.el
+@verbatiminclude ../examples/000-hello-world.el
 
 @node Hello World UTF8, Hello World HTML, Hello World, Usage Examples
 @section Hello World UTF8
@@ -208,11 +208,11 @@ This example only differs from the previous in that the
 ``Content-type'' indicates UTF8 encoded data, and the hello world sent
 is selected at random from a list of different languages.
 
-@verbatiminclude ../examples/1-hello-world-utf8.el
+@verbatiminclude ../examples/001-hello-world-utf8.el
 
 @node Hello World HTML, File Server, Hello World UTF8, Usage Examples
 @section Hello World HTML
-@verbatiminclude ../examples/2-hello-world-html.el
+@verbatiminclude ../examples/002-hello-world-html.el
 
 This variation of the ``hello world'' example sends a @code{text/html}
 response instead of a simple @code{text/plain} response.
@@ -230,7 +230,7 @@ response based on the extension of the file, if not then
 @code{ws-send-404} is used to send a default ``File Not Found''
 response.
 
-@verbatiminclude ../examples/3-file-server.el
+@verbatiminclude ../examples/003-file-server.el
 
 @node URL Parameter Echo, POST Echo, File Server, Usage Examples
 @section URL Parameter Echo
@@ -245,7 +245,7 @@ the following HTML table.
 @item baz @tab qux
 @end multitable
 
-@verbatiminclude ../examples/4-url-param-echo.el
+@verbatiminclude ../examples/004-url-param-echo.el
 
 @node POST Echo, Basic Authentication, URL Parameter Echo, Usage Examples
 @section POST Echo
@@ -253,7 +253,7 @@ the following HTML table.
 The following example echos back the content of the ``message'' field
 in a @code{POST} request.
 
-@verbatiminclude ../examples/5-post-echo.el
+@verbatiminclude ../examples/005-post-echo.el
 
 @node Basic Authentication, Org-mode Export, POST Echo, Usage Examples
 @section Basic Authentication
@@ -279,7 +279,7 @@ with HTTPS network encryption.  While the Emacs web server currently
 doesn't support HTTPS network encryption it may be run behind an HTTPS
 proxy server (e.g., Apache or Nginx) with HTTPS support.
 
-@verbatiminclude ../examples/6-basic-authentication.el
+@verbatiminclude ../examples/006-basic-authentication.el
 
 @node Org-mode Export, File Upload, Basic Authentication, Usage Examples
 @section Org-mode Export
@@ -288,7 +288,7 @@ The following example exports a directory of Org-mode files as either
 text, HTML or LaTeX.  The Org-mode export engine is used to export
 files on-demand as they are requested.
 
-@verbatiminclude ../examples/7-org-mode-file-server.el
+@verbatiminclude ../examples/007-org-mode-file-server.el
 
 @node File Upload, Web Socket, Org-mode Export, Usage Examples
 @section File Upload
@@ -297,7 +297,7 @@ The following example demonstrates accessing an uploaded file.  This
 simple server accesses the file named ``file'' and returns it's
 sha1sum and file name.
 
-@verbatiminclude ../examples/8-file-upload.el
+@verbatiminclude ../examples/008-file-upload.el
 
 A file may be uploaded from an HTML form, or using the @code{curl}
 program as in the following example.
@@ -334,7 +334,7 @@ Note: in order to keep the web socket connection alive the request
 handler from which @code{ws-web-socket-connect} is called must return
 the @code{:keep-alive} keyword, as demonstrated in the example.
 
-@verbatiminclude ../examples/9-web-socket.el
+@verbatiminclude ../examples/009-web-socket.el
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index
