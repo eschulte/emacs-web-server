@@ -1,21 +1,22 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [10/25]
-** TODO web sockets
+* Tasks [14/24]
+** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
 - http://tools.ietf.org/html/rfc6455
 
-** more examples [0/4]
-*** TODO Org-mode agenda
+** more examples [3/3]
+*** DONE Org-mode agenda
 Already exists as part of org-ehtml.
+file:examples/11-org-agenda.el
 
-*** TODO display the current buffer
+*** DONE display the current buffer
 Idea stolen from elnode.
+file:examples/10-current-buffer.el
 
-*** TODO browse the BBDB
-*** TODO browse available ELPA packages
-Also took this idea from elnode.
+*** DONE browse the BBDB
+file:examples/12-search-bbdb.el
 
 ** DONE handle large files
 When large files arrive quickly, the filter functions are called while
@@ -162,3 +163,7 @@ low priority -- just [[*running%20behind%20an%20https%20proxy][run behind an htt
 This will be a pain, and will require expanding [[info:emacs-gnutls]] to
 add support for starting server processes, currently only client
 processes are supported.
+* Bugs [0/1]
+** TODO Sometimes servers don't stop cleanly
+- specifically servers with active client process
+- maybe also implement a =ws-stop-all= function
