@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Benchmark</title>
+<!-- 2014-01-08 Wed 00:17 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<style>pre{background:#232323; color:#E6E1DC;} table{margin:auto; width:50%;} @media(min-width:800px){div#content{max-width:800px; padding:2em; margin:auto;}}</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Benchmark</h1>
+<div class="center">
+<p>
+Benchmark comparison of <a href="https://github.com/eschulte/emacs-web-server">web-server</a> and <a href="https://github.com/nicferrier/elnode">elnode</a> using the Apache
+Benchmarking tool (<a href="http://httpd.apache.org/docs/2.2/programs/ab.html">ab</a>).
+</p>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Hello World</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Serving the string "hello world" to every request.
+</p>
+
+<table id="hello-requests-per-second" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption align="above"><span class="table-number">Table 1:</span> Hello World Requests Served per Second</caption>
+
+<colgroup>
+<col  class="right" />
+
+<col  class="right" />
+
+<col  class="right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="right">concurrency</th>
+<th scope="col" class="right">elnode</th>
+<th scope="col" class="right">web-server</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="right">1</td>
+<td class="right">148.33</td>
+<td class="right">773.17</td>
+</tr>
+
+<tr>
+<td class="right">5</td>
+<td class="right">160.8</td>
+<td class="right">1618.41</td>
+</tr>
+
+<tr>
+<td class="right">10</td>
+<td class="right">186.81</td>
+<td class="right">1574.55</td>
+</tr>
+
+<tr>
+<td class="right">50</td>
+<td class="right">232.23</td>
+<td class="right">1627.28</td>
+</tr>
+
+<tr>
+<td class="right">100</td>
+<td class="right">NA</td>
+<td class="right">1463.5</td>
+</tr>
+</tbody>
+</table>
+
+
+<div class="figure">
+<p><img src="hello-requests-per-second.svg" alt="hello-requests-per-second.svg" />
+</p>
+</div>
+
+<ul class="org-ul">
+<li>Web Server "hello world" handler.
+<div class="org-src-container">
+
+<pre class="src src-emacs-lisp"><span style="color: #7f7f7f;">(</span>ws-start
+ '<span style="color: #7f7f7f;">(((</span><span style="color: #ad7fa8;">:GET</span> . <span style="color: #e9b96e;">".*"</span><span style="color: #7f7f7f;">)</span> .
+    <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">lambda</span> <span style="color: #7f7f7f;">(</span>request<span style="color: #7f7f7f;">)</span>
+      <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">with-slots</span> <span style="color: #7f7f7f;">(</span>process<span style="color: #7f7f7f;">)</span> request
+        <span style="color: #7f7f7f;">(</span>ws-response-header process 200 '<span style="color: #7f7f7f;">(</span><span style="color: #e9b96e;">"Content-type"</span> . <span style="color: #e9b96e;">"text/plain"</span><span style="color: #7f7f7f;">))</span>
+        <span style="color: #7f7f7f;">(</span>process-send-string process <span style="color: #e9b96e;">"hello world"</span><span style="color: #7f7f7f;">)))))</span>
+ 9000<span style="color: #7f7f7f;">)</span>
+</pre>
+</div>
+</li>
+
+<li>Elnode "hello world" handler.
+<div class="org-src-container">
+
+<pre class="src src-emacs-lisp"><span style="color: #7f7f7f;">(</span>elnode-start
+ <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">lambda</span> <span style="color: #7f7f7f;">(</span>httpcon<span style="color: #7f7f7f;">)</span>
+   <span style="color: #7f7f7f;">(</span>elnode-http-start httpcon 200 '<span style="color: #7f7f7f;">(</span><span style="color: #e9b96e;">"Content-Type"</span> . <span style="color: #e9b96e;">"text/plain"</span><span style="color: #7f7f7f;">))</span>
+   <span style="color: #7f7f7f;">(</span>elnode-http-return httpcon <span style="color: #e9b96e;">"hello world"</span><span style="color: #7f7f7f;">))</span>
+ <span style="color: #ad7fa8;">:port</span> 8000<span style="color: #7f7f7f;">)</span>
+</pre>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">File Server</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Serving the <code>COPYING</code> file distributed with Emacs.
+</p>
+
+<table id="file-requests-per-second" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption align="above"><span class="table-number">Table 2:</span> COPYING Files Served per Second</caption>
+
+<colgroup>
+<col  class="right" />
+
+<col  class="right" />
+
+<col  class="right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="right">concurrency</th>
+<th scope="col" class="right">elnode</th>
+<th scope="col" class="right">web-server</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="right">1</td>
+<td class="right">63.41</td>
+<td class="right">391.78</td>
+</tr>
+
+<tr>
+<td class="right">5</td>
+<td class="right">34.25</td>
+<td class="right">396.05</td>
+</tr>
+
+<tr>
+<td class="right">10</td>
+<td class="right">24.17</td>
+<td class="right">388.33</td>
+</tr>
+
+<tr>
+<td class="right">50</td>
+<td class="right">NA</td>
+<td class="right">386.42</td>
+</tr>
+
+<tr>
+<td class="right">100</td>
+<td class="right">NA</td>
+<td class="right">355.88</td>
+</tr>
+</tbody>
+</table>
+
+
+<div class="figure">
+<p><img src="copying-requests-per-second.svg" alt="copying-requests-per-second.svg" />
+</p>
+</div>
+
+<ul class="org-ul">
+<li>Web Server file server handler.
+<div class="org-src-container">
+
+<pre class="src src-emacs-lisp"><span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">lexical-let</span> <span style="color: #7f7f7f;">((</span>docroot <span style="color: #e9b96e;">"/usr/share/emacs/24.3/etc/"</span><span style="color: #7f7f7f;">))</span>
+  <span style="color: #7f7f7f;">(</span>ws-start
+   <span style="color: #7f7f7f;">(</span>list <span style="color: #7f7f7f;">(</span>cons <span style="color: #7f7f7f;">(</span>cons <span style="color: #ad7fa8;">:GET</span> <span style="color: #e9b96e;">".*"</span><span style="color: #7f7f7f;">)</span>
+               <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">lambda</span> <span style="color: #7f7f7f;">(</span>request<span style="color: #7f7f7f;">)</span>
+                 <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">with-slots</span> <span style="color: #7f7f7f;">(</span>process headers<span style="color: #7f7f7f;">)</span> request
+                   <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">let</span> <span style="color: #7f7f7f;">((</span>path <span style="color: #7f7f7f;">(</span>substring <span style="color: #7f7f7f;">(</span>cdr <span style="color: #7f7f7f;">(</span>assoc <span style="color: #ad7fa8;">:GET</span> headers<span style="color: #7f7f7f;">))</span> 1<span style="color: #7f7f7f;">)))</span>
+                     <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">if</span> <span style="color: #7f7f7f;">(</span>ws-in-directory-p docroot path<span style="color: #7f7f7f;">)</span>
+                         <span style="color: #7f7f7f;">(</span>ws-send-file process <span style="color: #7f7f7f;">(</span>expand-file-name path docroot<span style="color: #7f7f7f;">))</span>
+                       <span style="color: #7f7f7f;">(</span>ws-send-404 process<span style="color: #7f7f7f;">)))))))</span>
+   9000<span style="color: #7f7f7f;">))</span>
+</pre>
+</div>
+</li>
+
+<li>Elnode file server handler.
+<div class="org-src-container">
+
+<pre class="src src-emacs-lisp"><span style="color: #7f7f7f;">(</span>elnode-start
+ <span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">lambda</span> <span style="color: #7f7f7f;">(</span>httpcon<span style="color: #7f7f7f;">)</span>
+   <span style="color: #7f7f7f;">(</span>elnode-docroot-for <span style="color: #e9b96e;">"/usr/share/emacs/24.3/etc/"</span> <span style="color: #ad7fa8;">:with</span> file <span style="color: #ad7fa8;">:on</span> httpcon <span style="color: #ad7fa8;">:do</span>
+     <span style="color: #7f7f7f;">(</span>elnode-send-file httpcon file<span style="color: #7f7f7f;">)))</span>
+ <span style="color: #ad7fa8;">:port</span> 8000<span style="color: #7f7f7f;">)</span>
+</pre>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Method</h2>
+<div class="outline-text-2" id="text-3">
+<ul class="org-ul">
+<li>The machine used was my ThinkPad x220 laptop with two dual-core
+Intel i7 CPUs.
+</li>
+
+<li>Apache Benchmarking tool (<a href="http://httpd.apache.org/docs/2.2/programs/ab.html">ab</a>) was run with the following command.
+Only results for successful runs are reported; elnode handles at
+most 50 concurrent requests, and web-server handles at most 100
+concurrent requests.
+<div class="org-src-container">
+
+<pre class="src src-sh"><span style="color: #b4fa70;">for</span> c<span style="color: #b4fa70;"> in</span> 1 5 10 50 100 250 500 750 1000;<span style="color: #b4fa70;">do</span>
+    ab -n 5000 -c $<span style="color: #fcaf3e;">c</span> http://127.0.0.1:8000/ &gt;elnode/$<span style="color: #fcaf3e;">c</span>.txt
+    <span style="color: #ad7fa8;">echo</span> $<span style="color: #fcaf3e;">c</span>
+<span style="color: #b4fa70;">done</span>
+</pre>
+</div>
+</li>
+
+<li>The elnode server is run with the following
+<div class="org-src-container">
+
+<pre class="src src-sh">emacs -Q <span style="color: #e9b96e;">\</span>
+    -L elnode-0.9.9.7.6 <span style="color: #e9b96e;">\</span>
+    -L fakir-20130711.1322 <span style="color: #e9b96e;">\</span>
+    -L dash-20131207.215 <span style="color: #e9b96e;">\</span>
+    -L noflet-20130901.922 <span style="color: #e9b96e;">\</span>
+    -L s-1.8.0 <span style="color: #e9b96e;">\</span>
+    -L creole-20130802.122 <span style="color: #e9b96e;">\</span>
+    -L db-20130125.1029 <span style="color: #e9b96e;">\</span>
+    -L kv-20130818.337 <span style="color: #e9b96e;">\</span>
+    -L web-20130827.512 <span style="color: #e9b96e;">\</span>
+    -l elnode -file ../src/web-server/doc/benchmark/elnode-hello-world.el
+</pre>
+</div>
+</li>
+
+<li>The Emacs web-server is run with the following.
+<div class="org-src-container">
+
+<pre class="src src-sh">emacs -Q -L ../.. -l web-server -file ws-hello-world.el
+</pre>
+</div>
+</li>
+
+<li>The following Emacs version was used.
+<pre class="example">
+GNU Emacs 24.3.1
+Copyright (C) 2013 Free Software Foundation, Inc.
+GNU Emacs comes with ABSOLUTELY NO WARRANTY.
+You may redistribute copies of Emacs
+under the terms of the GNU General Public License.
+For more information about these matters, see the file named COPYING.
+</pre>
+</li>
+
+<li>Results were collected with the following.
+<div class="org-src-container">
+
+<pre class="src src-sh">grep -ri <span style="color: #e9b96e;">"requests per second"</span> ./web-server/ ./elnode <span style="color: #e9b96e;">\</span>
+    |sed <span style="color: #e9b96e;">'s|./||;s|/|\t|;s/.txt.*second: */\t/;s/ \[.*$//'</span>
+</pre>
+</div>
+</li>
+
+<li>Full <code>ab</code> output files are available <a href="benchmark.tar.bz2">benchmark.tar.bz2</a>.
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2014-01-08 Wed 00:17</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.4)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

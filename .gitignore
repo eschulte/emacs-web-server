@@ -2,3 +2,5 @@
 !.gitignore
 !*.html
 !*.svg
+!benchmark
+!benchmark/index.org

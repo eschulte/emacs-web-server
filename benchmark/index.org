@@ -1,0 +1,156 @@
+#+Title: Benchmark
+#+HTML_HEAD: <style>pre{background:#232323; color:#E6E1DC;} table{margin:auto; width:50%;} @media(min-width:800px){div#content{max-width:800px; padding:2em; margin:auto;}}</style>
+#+Options: ^:{} toc:nil num:nil
+
+#+begin_center
+Benchmark comparison of [[https://github.com/eschulte/emacs-web-server][web-server]] and [[https://github.com/nicferrier/elnode][elnode]] using the Apache
+Benchmarking tool ([[http://httpd.apache.org/docs/2.2/programs/ab.html][ab]]).
+#+end_center
+
+* Hello World
+Serving the string "hello world" to every request.
+
+#+Caption: Hello World Requests Served per Second
+#+name: hello-requests-per-second
+| concurrency | elnode | web-server |
+|-------------+--------+------------|
+|           1 | 148.33 |     773.17 |
+|           5 |  160.8 |    1618.41 |
+|          10 | 186.81 |    1574.55 |
+|          50 | 232.23 |    1627.28 |
+|         100 |     NA |     1463.5 |
+
+#+begin_src gnuplot :var data=hello-requests-per-second :file hello-requests-per-second.svg :eval no
+  set title "Hello World Requests Served per Second"
+  set ylabel "Requests Served per Second"
+  set xlabel "Concurrent Requests"
+  set key above
+  set logscale x
+  plot data using 1:2 lw 2 lt 1 lc 1 w lines title "elnode", \
+       data using 1:3 lw 2 lt 0 lc 2w lines title "web-server"
+#+end_src
+[[file:hello-requests-per-second.svg]]
+
+- Web Server "hello world" handler.
+  #+begin_src emacs-lisp
+  (ws-start
+   '(((:GET . ".*") .
+      (lambda (request)
+        (with-slots (process) request
+          (ws-response-header process 200 '("Content-type" . "text/plain"))
+          (process-send-string process "hello world")))))
+   9000)
+  #+end_src
+
+- Elnode "hello world" handler.
+  #+begin_src emacs-lisp
+    (elnode-start
+     (lambda (httpcon)
+       (elnode-http-start httpcon 200 '("Content-Type" . "text/plain"))
+       (elnode-http-return httpcon "hello world"))
+     :port 8000)  
+  #+end_src
+
+* File Server
+Serving the =COPYING= file distributed with Emacs.
+
+#+Caption: COPYING Files Served per Second
+#+name: file-requests-per-second
+| concurrency | elnode | web-server |
+|-------------+--------+------------|
+|           1 |  63.41 |     391.78 |
+|           5 |  34.25 |     396.05 |
+|          10 |  24.17 |     388.33 |
+|          50 |     NA |     386.42 |
+|         100 |     NA |     355.88 |
+
+#+begin_src gnuplot :var data=file-requests-per-second :file copying-requests-per-second.svg :eval no
+  set title "COPYING Files Served per Second"
+  set ylabel "Requests Served per Second"
+  set xlabel "Concurrent Requests"
+  set yrange [:450]
+  set key above
+  set logscale x
+  plot data using 1:2 lw 2 lt 1 lc 1 w lines title "elnode", \
+       data using 1:3 lw 2 lt 0 lc 2w lines title "web-server"
+#+end_src
+[[file:copying-requests-per-second.svg]]
+
+- Web Server file server handler.
+  #+begin_src emacs-lisp
+    (lexical-let ((docroot "/usr/share/emacs/24.3/etc/"))
+      (ws-start
+       (list (cons (cons :GET ".*")
+                   (lambda (request)
+                     (with-slots (process headers) request
+                       (let ((path (substring (cdr (assoc :GET headers)) 1)))
+                         (if (ws-in-directory-p docroot path)
+                             (ws-send-file process (expand-file-name path docroot))
+                           (ws-send-404 process)))))))
+       9000))
+  #+end_src
+
+- Elnode file server handler.
+  #+begin_src emacs-lisp
+  (elnode-start
+   (lambda (httpcon)
+     (elnode-docroot-for "/usr/share/emacs/24.3/etc/" :with file :on httpcon :do
+       (elnode-send-file httpcon file)))
+   :port 8000)
+  #+end_src
+
+* Method
+- The machine used was my ThinkPad x220 laptop with two dual-core
+  Intel i7 CPUs.
+
+- Apache Benchmarking tool ([[http://httpd.apache.org/docs/2.2/programs/ab.html][ab]]) was run with the following command.
+  Only results for successful runs are reported; elnode handles at
+  most 50 concurrent requests, and web-server handles at most 100
+  concurrent requests.
+  #+begin_src sh :var package="elnode" :var port=9000
+    for c in 1 5 10 50 100 250 500 750 1000;do
+        ab -n 5000 -c $c http://127.0.0.1:8000/ >elnode/$c.txt
+        echo $c
+    done
+  #+end_src
+
+- The elnode server is run with the following
+  #+begin_src sh
+    emacs -Q \
+        -L elnode-0.9.9.7.6 \
+        -L fakir-20130711.1322 \
+        -L dash-20131207.215 \
+        -L noflet-20130901.922 \
+        -L s-1.8.0 \
+        -L creole-20130802.122 \
+        -L db-20130125.1029 \
+        -L kv-20130818.337 \
+        -L web-20130827.512 \
+        -l elnode -file ../src/web-server/doc/benchmark/elnode-hello-world.el
+  #+end_src
+
+- The Emacs web-server is run with the following.
+  #+begin_src sh
+    emacs -Q -L ../.. -l web-server -file ws-hello-world.el
+  #+end_src
+
+- The following Emacs version was used.
+  #+begin_src sh :results scalar :exports results
+  emacs --version
+  #+end_src
+
+  #+RESULTS:
+  : GNU Emacs 24.3.1
+  : Copyright (C) 2013 Free Software Foundation, Inc.
+  : GNU Emacs comes with ABSOLUTELY NO WARRANTY.
+  : You may redistribute copies of Emacs
+  : under the terms of the GNU General Public License.
+  : For more information about these matters, see the file named COPYING.
+
+- Results were collected with the following.
+  #+begin_src sh
+    grep -ri "requests per second" ./web-server/ ./elnode \
+        |sed 's|./||;s|/|\t|;s/.txt.*second: */\t/;s/ \[.*$//'
+  #+end_src
+
+- Full =ab= output files are available file:benchmark.tar.bz2.
