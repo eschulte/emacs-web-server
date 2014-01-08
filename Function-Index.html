@@ -25,7 +25,7 @@ A copy of the license is included in the section entitled
 <link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="index.html#Top" rel="up" title="Top">
 <link href="Copying.html#Copying" rel="next" title="Copying">
-<link href="File-Upload.html#File-Upload" rel="prev" title="File Upload">
+<link href="Web-Socket.html#Web-Socket" rel="prev" title="Web Socket">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
@@ -183,6 +183,22 @@ can be determined.
 
 (ws-in-directory-p &quot;/tmp/&quot; &quot;~/pics&quot;)
     &rArr; nil
+</pre></div>
+</dd></dl>
+
+<a name="ws_002dweb_002dsocket_002dconnect"></a><dl>
+<dt><a name="index-ws_002dweb_002dsocket_002dconnect"></a>Function: <strong>ws-web-socket-connect</strong> <em>request handler</em></dt>
+<dd><p>If <code>request</code> is a web socket upgrade request (indicated by the
+presence of the <code>:SEC-WEBSOCKET-KEY</code> header argument) establish a
+web socket connection to the client.  Call <code>handler</code> on web
+socket messages received from the client.
+</p>
+<div class="example">
+<pre class="example">(ws-web-socket-connect request
+  (lambda (proc string)
+    (process-send-string proc
+      (ws-web-socket-frame (concat &quot;you said: &quot; string)))))
+    &rArr; #&lt;process ws-server &lt;127.0.0.1:34921&gt;&gt;
 </pre></div>
 </dd></dl>
 

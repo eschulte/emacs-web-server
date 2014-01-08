@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This file documents the Emacs Web Server (ws)
+
+Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with the Invariant Section being "GNU GENERAL PUBLIC LICENSE,"
+A copy of the license is included in the section entitled
+"GNU Free Documentation License." -->
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Emacs Web Server (ws) User Manual: Web Socket</title>
+
+<meta name="description" content="Emacs Web Server (ws) User Manual: Web Socket">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Web Socket">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
+<link href="Function-Index.html#Function-Index" rel="next" title="Function Index">
+<link href="File-Upload.html#File-Upload" rel="prev" title="File Upload">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+<a name="Web-Socket"></a>
+<div class="header">
+<p>
+Next: <a href="Function-Index.html#Function-Index" accesskey="n" rel="next">Function Index</a>, Previous: <a href="File-Upload.html#File-Upload" accesskey="p" rel="prev">File Upload</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Web-Socket-1"></a>
+<h3 class="section">4.10 Web Socket</h3>
+
+<p>Example demonstrating the use of web sockets for full duplex
+communication between clients and the server.  Handlers may use the
+<code>ws-web-socket-connect</code> function (see <a href="Function-Index.html#ws_002dweb_002dsocket_002dconnect">ws-web-socket-connect</a>)
+to check for and respond to a web socket upgrade request sent by the
+client (as demonstrated with the <code>new WebSocket</code> JavaScript code
+in the example).  Upon successfully initializing a web socket
+connection the call to <code>ws-web-socket-connect</code> will return the
+web socket network process.  This process may then be used by the
+server to communicate with the client over the web socket using the
+<code>process-send-string</code> and <code>ws-web-socket-frame</code> functions.
+All web socket communication must be wrapped in frames using the
+<code>ws-web-socket-frame</code> function.
+</p>
+<p>The handler must pass a function as the second argument to
+<code>ws-web-socket-connect</code>.  This function will be called on every
+web socket message received from the client.
+</p>
+<p>Note: in order to keep the web socket connection alive the request
+handler from which <code>ws-web-socket-connect</code> is called must return
+the <code>:keep-alive</code> keyword, as demonstrated in the example.
+</p>
+<pre class="verbatim">;;; web-sockets.el --- communicate via web-sockets
+
+(lexical-let* ((web-socket-port 9009)
+               (web-socket-page
+                (format &quot;&lt;html&gt;
+&lt;head&gt;
+&lt;script type=\&quot;text/javascript\&quot;&gt;
+var ws;
+function connect(){
+  ws = new WebSocket(\&quot;ws://localhost:%d/\&quot;);
+
+  ws.onopen    = function()    { alert(\&quot;connected\&quot;); };
+  ws.onmessage = function(msg) { alert(\&quot;server: \&quot; + msg.data); };
+  ws.onclose   = function()    { alert(\&quot;connection closed\&quot;); };
+}
+
+function message(){ ws.send(\&quot;foo\&quot;); }
+
+function close(){ ws.close(); };
+&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;ol&gt;
+
+&lt;li&gt;Press \&quot;connect\&quot; to initialize the web socket connection to
+    the server.  The server will complete the web socket
+    handshake at which point you'll see an alert with the text
+    \&quot;connected\&quot;.&lt;/li&gt;
+
+&lt;li&gt;Press \&quot;message\&quot; to send the string \&quot;foo\&quot; to the server.
+    The server will reply with the text \&quot;you said: foo\&quot; which
+    you will see in an alert as \&quot;server: you said: foo\&quot;.&lt;/li&gt;
+
+&lt;li&gt;Press \&quot;close\&quot; to close the connection.  After the server
+    responds with a close frame you will see an alert with the
+    text \&quot;connection closed\&quot;.&lt;/li&gt;
+
+&lt;/ol&gt;
+&lt;a href=\&quot;javascript:connect()\&quot;&gt;connect&lt;/a&gt;
+&lt;a href=\&quot;javascript:message()\&quot;&gt;message&lt;/a&gt;
+&lt;a href=\&quot;javascript:close()\&quot;&gt;close&lt;/a&gt;
+&lt;/body&gt;
+&lt;/html&gt;&quot; web-socket-port)))
+  (ws-start
+   (list
+    (cons
+     '(:GET . &quot;.*&quot;)
+     (lambda (request)
+       (with-slots (process headers) request
+         ;; if a web-socket request, then connect and keep open
+         (if (ws-web-socket-connect request
+               (lambda (proc string)
+                 (process-send-string proc
+                   (ws-web-socket-frame (concat &quot;you said: &quot; string)))))
+             (prog1 :keep-alive (setq my-connection process))
+           ;; otherwise send the index page
+           (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
+           (process-send-string process web-socket-page))))))
+   web-socket-port))
+</pre>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Function-Index.html#Function-Index" accesskey="n" rel="next">Function Index</a>, Previous: <a href="File-Upload.html#File-Upload" accesskey="p" rel="prev">File Upload</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
