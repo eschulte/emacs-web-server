@@ -1,12 +1,12 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [14/24]
+* Tasks [15/25]
 ** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
 - http://tools.ietf.org/html/rfc6455
 
-** more examples [3/3]
+** more examples [4/4]
 *** DONE Org-mode agenda
 Already exists as part of org-ehtml.
 file:examples/011-org-agenda.el
@@ -17,6 +17,10 @@ file:examples/010-current-buffer.el
 
 *** DONE browse the BBDB
 file:examples/012-search-bbdb.el
+*** DONE org-mode export server
+1. upload a file
+2. supply an export type
+3. return the exported version of the file
 
 ** DONE handle large files
 When large files arrive quickly, the filter functions are called while
