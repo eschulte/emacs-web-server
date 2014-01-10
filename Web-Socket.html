@@ -133,20 +133,17 @@ function close(){ ws.close(); };
 &lt;/body&gt;
 &lt;/html&gt;&quot; web-socket-port)))
   (ws-start
-   (list
-    (cons
-     '(:GET . &quot;.*&quot;)
-     (lambda (request)
-       (with-slots (process headers) request
-         ;; if a web-socket request, then connect and keep open
-         (if (ws-web-socket-connect request
-               (lambda (proc string)
-                 (process-send-string proc
-                   (ws-web-socket-frame (concat &quot;you said: &quot; string)))))
-             (prog1 :keep-alive (setq my-connection process))
-           ;; otherwise send the index page
-           (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
-           (process-send-string process web-socket-page))))))
+   (lambda (request)
+     (with-slots (process headers) request
+       ;; if a web-socket request, then connect and keep open
+       (if (ws-web-socket-connect request
+             (lambda (proc string)
+               (process-send-string proc
+                 (ws-web-socket-frame (concat &quot;you said: &quot; string)))))
+           (prog1 :keep-alive (setq my-connection process))
+         ;; otherwise send the index page
+         (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
+         (process-send-string process web-socket-page))))
    web-socket-port))
 </pre>
 <hr>

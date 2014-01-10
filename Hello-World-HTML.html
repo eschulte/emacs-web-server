@@ -69,19 +69,17 @@ Next: <a href="File-Server.html#File-Server" accesskey="n" rel="next">File Serve
 <h3 class="section">4.3 Hello World HTML</h3>
 <pre class="verbatim">;;; hello-world-html.el --- html hello world server using Emacs Web Server
 (ws-start
- '(((lambda (_) t) .
-    (lambda (request)
-      (with-slots (process headers) request
-        (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
-        (process-send-string process &quot;&lt;html&gt;
+ (lambda (request)
+   (with-slots (process headers) request
+     (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
+     (process-send-string process &quot;&lt;html&gt;
   &lt;head&gt;
     &lt;title&gt;Hello World&lt;/title&gt;
   &lt;/head&gt;
   &lt;body&gt;
     &lt;b&gt;hello world&lt;/b&gt;
   &lt;/body&gt;
-&lt;/html&gt;
-&quot;)))))
+&lt;/html&gt;&quot;)))
  9002)
 </pre>
 <p>This variation of the &ldquo;hello world&rdquo; example sends a <code>text/html</code>

@@ -69,10 +69,14 @@ Next: <a href="Requests.html#Requests" accesskey="n" rel="next">Requests</a>, Pr
 <h2 class="chapter">2 Handlers</h2>
 <a name="index-handlers"></a>
 
-<p>The function <code>ws-start</code> takes takes two arguments
-<code>handlers</code> and <code>port</code>.  It starts a server listening on
-<code>port</code> responding to requests with <code>handlers</code>, an
-association list composed of pairs of matchers and handler functions.
+<p>The function <code>ws-start</code> takes takes two arguments <code>handlers</code>
+and <code>port</code>.  It starts a server listening on <code>port</code>
+responding to requests with <code>handlers</code>.  <code>Handlers</code> may be
+either a single function or an association list composed of pairs of
+matchers and handler functions.  When <code>handlers</code> is a single
+function the given function is used to serve every request, when it is
+an association list, the function of the first matcher to match each
+request handles that request.
 </p>
 <a name="Matchers"></a>
 <h3 class="section">2.1 Matchers</h3>

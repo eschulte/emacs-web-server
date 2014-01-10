@@ -77,11 +77,10 @@ request is closed.
 </p>
 <pre class="verbatim">;;; hello-world.el --- simple hello world server using Emacs Web Server
 (ws-start
- '(((lambda (_) t) .
-    (lambda (request)
-      (with-slots (process headers) request
-        (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
-        (process-send-string process &quot;hello world&quot;)))))
+ (lambda (request)
+   (with-slots (process headers) request
+     (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+     (process-send-string process &quot;hello world&quot;)))
  9000)
 </pre>
 

@@ -74,24 +74,23 @@ is selected at random from a list of different languages.
 </p>
 <pre class="verbatim">;;; hello-world-utf8.el --- utf8 hello world server using Emacs Web Server
 (ws-start
- '(((lambda (_) t) .
-    (lambda (request)
-      (with-slots (process headers) request
-        (let ((hellos '(&quot;こんにちは&quot;
-                        &quot;안녕하세요&quot;
-                        &quot;góðan dag&quot;
-                        &quot;Grüßgott&quot;
-                        &quot;hyvää päivää&quot;
-                        &quot;yá'át'ééh&quot;
-                        &quot;Γεια σας&quot;
-                        &quot;Вiтаю&quot;
-                        &quot;გამარჯობა&quot;
-                        &quot;नमस्ते&quot;
-                        &quot;你好&quot;)))
-          (ws-response-header process 200
-            '(&quot;Content-type&quot; . &quot;text/plain; charset=utf-8&quot;))
-          (process-send-string process
-            (concat (nth (random (length hellos)) hellos) &quot; world&quot;)))))))
+ (lambda (request)
+   (with-slots (process headers) request
+     (let ((hellos '(&quot;こんにちは&quot;
+                     &quot;안녕하세요&quot;
+                     &quot;góðan dag&quot;
+                     &quot;Grüßgott&quot;
+                     &quot;hyvää päivää&quot;
+                     &quot;yá'át'ééh&quot;
+                     &quot;Γεια σας&quot;
+                     &quot;Вiтаю&quot;
+                     &quot;გამარჯობა&quot;
+                     &quot;नमस्ते&quot;
+                     &quot;你好&quot;)))
+       (ws-response-header process 200
+         '(&quot;Content-type&quot; . &quot;text/plain; charset=utf-8&quot;))
+       (process-send-string process
+         (concat (nth (random (length hellos)) hellos) &quot; world&quot;)))))
  9001)
 </pre>
 
