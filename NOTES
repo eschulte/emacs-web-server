@@ -1,7 +1,7 @@
                                                            -*- org -*-
 
 * Notes
-* Tasks [15/25]
+* Tasks [15/24]
 ** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
 - http://tools.ietf.org/html/rfc6455
@@ -161,13 +161,13 @@ provide a light-weight mechanism for a function to wait for incoming
 process text without something gross like the =(sit-for 0.1)= used in
 the test suite.
 
-** TODO use gnutls for https
+** use gnutls for https
 low priority -- just [[*running%20behind%20an%20https%20proxy][run behind an https proxy]].
 
 This will be a pain, and will require expanding [[info:emacs-gnutls]] to
 add support for starting server processes, currently only client
 processes are supported.
-* Bugs [0/1]
-** TODO Sometimes servers don't stop cleanly
+* Bugs [1/1]
+** DONE Sometimes servers don't stop cleanly
 - specifically servers with active client process
 - maybe also implement a =ws-stop-all= function

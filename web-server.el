@@ -126,7 +126,7 @@ function.
 (defun ws-stop (server)
   "Stop SERVER."
   (setq ws-servers (remove server ws-servers))
-  (mapc #'delete-process (append (mapcar #'car (requests server))
+  (mapc #'delete-process (append (mapcar #'process (requests server))
                                  (list (process server)))))
 
 (defvar ws-http-common-methods '(GET HEAD POST PUT DELETE TRACE)
