@@ -62,13 +62,16 @@
 (defun ws-start (handlers port &optional log-buffer &rest network-args)
   "Start a server using HANDLERS and return the server object.
 
-HANDLERS should be a list of cons of the form (MATCH . ACTION),
-where MATCH is either a function (in which case it is called on
+HANDLERS may be a single function (which is then called on every
+request) or a list of conses of the form (MATCHER . FUNCTION),
+where the FUNCTION associated with the first successful MATCHER
+is called.  Handler functions are called with two arguments, the
+process and the request object.
+
+A MATCHER may be either a function (in which case it is called on
 the request object) or a cons cell of the form (KEYWORD . STRING)
 in which case STRING is matched against the value of the header
-specified by KEYWORD.  In either case when MATCH returns non-nil,
-then the function ACTION is called with two arguments, the
-process and the request object.
+specified by KEYWORD.
 
 Any supplied NETWORK-ARGS are assumed to be keyword arguments for
 `make-network-process' to which they are passed directly.
@@ -77,11 +80,10 @@ For example, the following starts a simple hello-world server on
 port 8080.
 
   (ws-start
-   '(((:GET . \".*\") .
-      (lambda (proc request)
-        (process-send-string proc
-         \"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nhello world\r\n\")
-        t)))
+   (lambda (request)
+     (with-slots (process headers) request
+       (process-send-string proc
+        \"HTTP/1.1 200 OK\\r\\nContent-Type: text/plain\\r\\n\\r\\nhello world\")))
    8080)
 
 Equivalently, the following starts an identical server using a
@@ -272,8 +274,12 @@ Return non-nil only when parsing is complete."
     (setf (active request) nil)
     nil))
 
- (defun ws-call-handler (request handlers)
+(defun ws-call-handler (request handlers)
   (catch 'matched-handler
+    (when (functionp handlers)
+      (throw 'matched-handler
+             (condition-case e (funcall handlers request)
+               (error (ws-error (process request) "Caught Error: %S" e)))))
     (mapc (lambda (handler)
             (let ((match (car handler))
                   (function (cdr handler)))
@@ -286,10 +292,10 @@ Return non-nil only when parsing is complete."
                 (throw 'matched-handler
                        (condition-case e (funcall function request)
                          (error (ws-error (process request)
-                                           "Caught Error: %S" e)))))))
+                                          "Caught Error: %S" e)))))))
           handlers)
     (ws-error (process request) "no handler matched request: %S"
-               (headers request))))
+              (headers request))))
 
 (defun ws-error (proc msg &rest args)
   (let ((buf (plist-get (process-plist proc) :log-buffer))
