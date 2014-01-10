@@ -556,6 +556,46 @@ If so return PATH, if not return nil."
          (string= parent (substring expanded 0 (length parent)))
          expanded)))
 
+(defun ws-with-authentication (handler credentials
+                                       &optional realm unauth invalid)
+  "Return a version of HANDLER protected by CREDENTIALS.
+HANDLER should be a function as passed to `ws-start', and
+CREDENTIALS should be an alist of elements of the form (USERNAME
+. PASSWORD).
+
+Optional argument REALM sets the realm in the authentication
+challenge.  Optional arguments UNAUTH and INVALID should be
+functions which are called on the request when no authentication
+information, or invalid authentication information are provided
+respectively."
+  (lexical-let ((handler handler)
+                (credentials credentials)
+                (realm realm)
+                (unauth unauth)
+                (invalid invalid))
+    (lambda (request)
+      (with-slots (process headers) request
+        (let ((auth (cddr (assoc :AUTHORIZATION headers))))
+          (cond
+           ;; no authentication information provided
+           ((not auth)
+            (if unauth
+                (funcall unauth request)
+              (ws-response-header process 401
+                (cons "WWW-Authenticate"
+                      (format "Basic realm=%S" (or realm "restricted")))
+                '("Content-type" . "text/plain"))
+              (process-send-string process "authentication required")))
+           ;; valid authentication information
+           ((string= (cdr auth) (cdr (assoc (car auth) credentials)))
+            (funcall handler request))
+           ;; invalid authentication information
+           (t
+            (if invalid
+                (funcall invalid request)
+              (ws-response-header process 403 '("Content-type" . "text/plain"))
+              (process-send-string process "invalid credentials")))))))))
+
 (defun ws-web-socket-handshake (key)
   "Perform the handshake defined in RFC6455."
   (base64-encode-string (sha1 (concat (ws-trim key) ws-guid) nil nil 'binary)))

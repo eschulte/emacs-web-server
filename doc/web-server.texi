@@ -458,6 +458,32 @@ Check if @code{path} is under the @code{parent} directory.
 @end example
 @end defun
 
+@anchor{ws-with-authentication}
+@defun ws-with-authentication handler credentials &optional realm unauth invalid
+Return a version of @code{handler} which is protected by
+@code{credentials}.  Handler should be a normal handler function
+(@pxref{Handlers}) and @code{credentials} should be an association
+list of usernames and passwords.
+
+For example, a server running the following handlers,
+
+@example
+(list (cons '(:GET  . ".*") 'view-handler)
+      (cons '(:POST . ".*") 'edit-handler))
+@end example
+
+could have authorization added by changing the handlers to the
+following.
+
+@example
+(list (cons '(:GET  . ".*") view-handler)
+      (cons '(:POST . ".*") (ws-with-authentication
+                             'org-ehtml-edit-handler
+                             '(("admin" . "password")))))
+@end example
+
+@end defun
+
 @anchor{ws-web-socket-connect}
 @defun ws-web-socket-connect request handler
 If @code{request} is a web socket upgrade request (indicated by the
