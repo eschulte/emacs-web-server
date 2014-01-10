@@ -186,6 +186,32 @@ can be determined.
 </pre></div>
 </dd></dl>
 
+<a name="ws_002dwith_002dauthentication"></a><dl>
+<dt><a name="index-ws_002dwith_002dauthentication"></a>Function: <strong>ws-with-authentication</strong> <em>handler credentials &amp;optional realm unauth invalid</em></dt>
+<dd><p>Return a version of <code>handler</code> which is protected by
+<code>credentials</code>.  Handler should be a normal handler function
+(see <a href="Handlers.html#Handlers">Handlers</a>) and <code>credentials</code> should be an association
+list of usernames and passwords.
+</p>
+<p>For example, a server running the following handlers,
+</p>
+<div class="example">
+<pre class="example">(list (cons '(:GET  . &quot;.*&quot;) 'view-handler)
+      (cons '(:POST . &quot;.*&quot;) 'edit-handler))
+</pre></div>
+
+<p>could have authorization added by changing the handlers to the
+following.
+</p>
+<div class="example">
+<pre class="example">(list (cons '(:GET  . &quot;.*&quot;) view-handler)
+      (cons '(:POST . &quot;.*&quot;) (ws-with-authentication
+                             'org-ehtml-edit-handler
+                             '((&quot;admin&quot; . &quot;password&quot;)))))
+</pre></div>
+
+</dd></dl>
+
 <a name="ws_002dweb_002dsocket_002dconnect"></a><dl>
 <dt><a name="index-ws_002dweb_002dsocket_002dconnect"></a>Function: <strong>ws-web-socket-connect</strong> <em>request handler</em></dt>
 <dd><p>If <code>request</code> is a web socket upgrade request (indicated by the

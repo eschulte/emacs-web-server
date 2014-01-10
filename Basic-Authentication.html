@@ -92,28 +92,14 @@ proxy server (e.g., Apache or Nginx) with HTTPS support.
 (lexical-let ((users '((&quot;foo&quot; . &quot;bar&quot;)
                        (&quot;baz&quot; . &quot;qux&quot;))))
   (ws-start
-   (lambda (request)
-     (with-slots (process headers) request
-       (let ((auth (cddr (assoc :AUTHORIZATION headers))))
-         (cond
-          ;; no authentication information provided
-          ((not auth)
-           (ws-response-header process 401
-             '(&quot;WWW-Authenticate&quot; . &quot;Basic realm=\&quot;example\&quot;&quot;)
-             '(&quot;Content-type&quot; . &quot;text/plain&quot;))
-           (process-send-string process &quot;authenticate&quot;))
-          ;; valid authentication information
-          ((string= (cdr auth) (cdr (assoc (car auth) users)))
-           (ws-response-header process 200
-             '(&quot;Content-type&quot; . &quot;text/plain&quot;))
-           (process-send-string process
-             (format &quot;welcome %s&quot; (car auth))))
-          ;; invalid authentication information
-          (t
-           (ws-response-header process 403
-             '(&quot;Content-type&quot; . &quot;text/plain&quot;))
-           (process-send-string process &quot;invalid credentials&quot;))))))
-   9007))
+   (ws-with-authentication
+    (lambda (request)
+      (with-slots (process headers) request
+        (let ((user (caddr (assoc :AUTHORIZATION headers))))
+          (ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/plain&quot;))
+          (process-send-string process (format &quot;welcome %s&quot; user)))))
+    users)
+   9006))
 </pre>
 
 
