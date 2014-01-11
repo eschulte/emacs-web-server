@@ -133,11 +133,12 @@ This will be a pain, and will require expanding [[info:emacs-gnutls]] to
 add support for starting server processes, currently only client
 processes are supported.
 * Tutorials
-The following tutorials walk through common steps including installing
-and running instances of the Emacs web-server.
+The following tutorials walk through common usage scenarios including
+installing the Emacs web-server and running it behind a proxy.
 
-** Simple installation and execution
-The following instructions 
+** Installation and running a server
+Installation should be as easy as updating the load path, and
+requiring =web-server=.  More complete instructions are below.
 
 1. Ensure that you have Emacs version 24 or greater installed.
 
@@ -164,15 +165,20 @@ The following instructions
    optionally run =make= to compile the web-server code, and run =make
    check= to test your web-server install.
 
+   #+begin_src sh
+     make
+     make check
+   #+end_src
+
 4. From the root of the =emacs-web-server/= directory, start an
    instance of Emacs with web-server loaded.
 
    #+begin_src sh
-     emacs -Q -L. -l web-server
+     emacs -Q -L . -l web-server
    #+end_src
 
-   Alternately, from an already running Emacs instance, add
-   emacs-web-server to the load path and load the web server with the
+   Alternately, from an already running Emacs instance, add this
+   directory to the load path and load the web server with the
    following.
 
    #+begin_src emacs-lisp

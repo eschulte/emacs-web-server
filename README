@@ -26,7 +26,7 @@ USAGE
     [3]  https://github.com/eschulte/org-ehtml
 
     The tutorials page [4] walks through usage scenarios including
-    installation and running the Emacs web-server behind a proxy.
+    installing the Emacs web-server and running it behind a proxy.
 
     [4]  http://eschulte.github.io/emacs-web-server/tutorials/
 
