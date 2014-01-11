@@ -17,16 +17,21 @@ STATUS
 
     [1]  http://eschulte.github.io/emacs-web-server/benchmark/
 
-EXAMPLES
-    See the examples/ directory in this repository.  The Emacs Web
-    Server is also used to run a paste server [2] and serve editable
-    Org-mode pages [3].
+USAGE
+    See the examples/ directory in this repository for examples
+    demonstrating usage.  The Emacs web-server is also used to run a
+    paste server [2] and serve editable Org-mode pages [3].
 
     [2]  https://github.com/eschulte/el-sprunge
     [3]  https://github.com/eschulte/org-ehtml
 
+    The tutorials page [4] walks through usage scenarios including
+    installation and running the Emacs web-server behind a proxy.
+
+    [4]  http://eschulte.github.io/emacs-web-server/tutorials/
+
 DOCUMENTATION
     Run `make doc' to build the texinfo documentation, also available
-    online [4].
+    online [5].
 
-    [4]  http://eschulte.github.io/emacs-web-server
+    [5]  http://eschulte.github.io/emacs-web-server
