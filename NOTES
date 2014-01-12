@@ -5,6 +5,11 @@
 
 * Notes
 * Tasks [15/21]
+** TODO chunked encoding
+- http://en.wikipedia.org/wiki/Chunked_transfer_encoding
+- http://tools.ietf.org/html/rfc1945#section-7.2
+- http://tools.ietf.org/rfc/rfc1945.txt
+
 ** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
 - http://tools.ietf.org/html/rfc6455
