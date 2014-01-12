@@ -395,6 +395,12 @@ servers.
 @end example
 @end defun
 
+@anchor{ws-stop-all}
+@defun ws-stop-all
+@code{ws-stop-all} stops all emacs web servers by mapping
+@code{ws-stop} over @code{ws-servers}.
+@end defun
+
 @section Convenience Functions
 The following convenience functions automate many common tasks
 associated with responding to HTTP requests.

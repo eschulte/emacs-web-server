@@ -131,6 +131,11 @@ function.
   (mapc #'delete-process (append (mapcar #'process (requests server))
                                  (list (process server)))))
 
+(defun ws-stop-all ()
+  "Stop all servers in `ws-servers'."
+  (interactive)
+  (mapc #'ws-stop ws-servers))
+
 (defvar ws-http-common-methods '(GET HEAD POST PUT DELETE TRACE)
   "HTTP methods from http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html.")
 
