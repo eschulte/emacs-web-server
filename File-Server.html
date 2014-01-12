@@ -75,8 +75,8 @@ directory in this example.  Four helper functions are used;
 within the document root.  If not then <code>ws-send-404</code> is used to
 send a default &ldquo;File Not Found&rdquo;.  If so then the file is served with
 <code>ws-send-file</code> (which appropriately sets the mime-type of the
-response based on the extension of the file), if not it is a file and
-is served with <code>ws-send-directory-list</code> if it is a directory.
+response based on the extension of the file) if it is a file or is
+served with <code>ws-send-directory-list</code> if it is a directory.
 </p>
 <pre class="verbatim">;;; file-server.el --- serve any files using Emacs Web Server
 (lexical-let ((docroot default-directory))
