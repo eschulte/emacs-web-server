@@ -170,6 +170,15 @@ mime-type is determined by calling <code>mm-default-file-encoding</code> on
 can be determined.
 </p></dd></dl>
 
+<a name="ws_002dsend_002ddirectory_002dlist"></a><dl>
+<dt><a name="index-ws_002dsend_002ddirectory_002dlist"></a>Function: <strong>ws-send-directory-list</strong> <em>process directory &amp;optional match</em></dt>
+<dd><p><code>ws-send-directory-list</code> sends the a listing of the files located
+in <code>directory</code> to <code>process</code>.  The list is sent as an HTML
+list of links to the files.  Optional argument <code>match</code> may be set
+to a regular expression, in which case only those files that match are
+listed.
+</p></dd></dl>
+
 <a name="ws_002din_002ddirectory_002dp"></a><dl>
 <dt><a name="index-ws_002din_002ddirectory_002dp"></a>Function: <strong>ws-in-directory-p</strong> <em>parent path</em></dt>
 <dd><p>Check if <code>path</code> is under the <code>parent</code> directory.
