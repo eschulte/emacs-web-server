@@ -80,18 +80,40 @@ files on-demand as they are requested.
        (let ((path (ws-in-directory-p ; check if path is in docroot
                     docroot (substring (cdr (assoc :GET headers)) 1))))
          (unless path (ws-send-404 process)) ; send 404 if not in docroot
-         (let* ((base (file-name-sans-extension path))
-                (type (case (intern (downcase (file-name-extension path)))
-                        (html 'html)
-                        (tex  'latex)
-                        (txt  'ascii)
-                        (t (ws-error process &quot;%S export not supported&quot;
-                                     (file-name-extension path)))))
-                (orig (concat base &quot;.org&quot;)))
-           (unless (file-exists-p orig) (ws-send-404 process))
-           (save-window-excursion (find-file orig)
-                                  (org-export-to-file type path))
-           (ws-send-file process path)))))
+         (if (file-directory-p path)
+             (progn ;; send directory listing, convert org files to html/tex/txt
+               (ws-response-header proc 200 (cons &quot;Content-type&quot; &quot;text/html&quot;))
+               (process-send-string proc
+                 (concat &quot;&lt;ul&gt;&quot;
+                         (mapconcat
+                          (lambda (f)
+                            (let* ((full (expand-file-name f path))
+                                   (end (if (file-directory-p full) &quot;/&quot; &quot;&quot;))
+                                   (url (url-encode-url (concat f end))))
+                              (format &quot;&lt;li&gt;&lt;a href=%s&gt;%s&lt;/li&gt;&quot; url f)))
+                          (apply #'append
+                                 (mapcar
+                                  (lambda (f)
+                                    (list (concat f &quot;.txt&quot;)
+                                          (concat f &quot;.tex&quot;)
+                                          (concat f &quot;.html&quot;)))
+                                  (mapcar #'file-name-sans-extension
+                                          (directory-files path nil
+                                                           &quot;^[^\.].*org$&quot;))))
+                          &quot;\n&quot;) &quot;&lt;/ul&gt;&quot;)))
+           ;; Export the file as requested and return the result
+           (let* ((base (file-name-sans-extension path))
+                  (type (case (intern (downcase (file-name-extension path)))
+                          (html 'html)
+                          (tex  'latex)
+                          (txt  'ascii)
+                          (t (ws-error process &quot;%S export not supported&quot;
+                                       (file-name-extension path)))))
+                  (orig (concat base &quot;.org&quot;)))
+             (unless (file-exists-p orig) (ws-send-404 process))
+             (save-window-excursion (find-file orig)
+                                    (org-export-to-file type path))
+             (ws-send-file process path))))))
    9007))
 </pre>
 
