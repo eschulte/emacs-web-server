@@ -555,7 +555,11 @@ used to limit the files sent."
   (ws-response-header proc 200 (cons "Content-type" "text/html"))
   (process-send-string proc
     (concat "<ul>"
-            (mapconcat (lambda (f) (format "<li><a href=%S>%s</li>" f f))
+            (mapconcat (lambda (f)
+                         (let* ((full (expand-file-name f directory))
+                                (end (if (file-directory-p full) "/" ""))
+                                (url (url-encode-url (concat f end))))
+                           (format "<li><a href=%s>%s</li>" url f)))
                        (directory-files directory nil match)
                        "\n")
             "</ul>")))
