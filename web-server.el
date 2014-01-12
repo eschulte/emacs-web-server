@@ -548,13 +548,27 @@ Optionally explicitly set MIME-TYPE, otherwise it is guessed by
         (insert-file-contents-literally path)
         (buffer-string)))))
 
+(defun ws-send-directory-list (proc directory &optional match)
+  "Send a listing of files in DIRECTORY to PROC.
+Optional argument MATCH is passed to `directory-files' and may be
+used to limit the files sent."
+  (ws-response-header proc 200 (cons "Content-type" "text/html"))
+  (process-send-string proc
+    (concat "<ul>"
+            (mapconcat (lambda (f) (format "<li><a href=%S>%s</li>" f f))
+                       (directory-files directory nil match)
+                       "\n")
+            "</ul>")))
+
 (defun ws-in-directory-p (parent path)
   "Check if PATH is under the PARENT directory.
 If so return PATH, if not return nil."
-  (let ((expanded (expand-file-name path parent)))
-    (and (>= (length expanded) (length parent))
-         (string= parent (substring expanded 0 (length parent)))
-         expanded)))
+  (if (zerop (length path))
+      parent
+    (let ((expanded (expand-file-name path parent)))
+      (and (>= (length expanded) (length parent))
+           (string= parent (substring expanded 0 (length parent)))
+           expanded))))
 
 (defun ws-with-authentication (handler credentials
                                        &optional realm unauth invalid)

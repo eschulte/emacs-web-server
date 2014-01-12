@@ -226,13 +226,13 @@ response instead of a simple @code{text/plain} response.
 
 The following example implements a file server which will serve files
 from the @code{docroot} document root set to the current working
-directory in this example.  Three helper functions are used;
-@code{ws-subdirectoryp} is used to check if the requested path is
-within the document root, if so the file is served and
-@code{ws-send-file} is used to appropriately set the mime-type of the
-response based on the extension of the file, if not then
-@code{ws-send-404} is used to send a default ``File Not Found''
-response.
+directory in this example.  Four helper functions are used;
+@code{ws-in-directory-p} is used to check if the requested path is
+within the document root.  If not then @code{ws-send-404} is used to
+send a default ``File Not Found''.  If so then the file is served with
+@code{ws-send-file} (which appropriately sets the mime-type of the
+response based on the extension of the file) if it is a file or is
+served with @code{ws-send-directory-list} if it is a directory.
 
 @verbatiminclude ../examples/003-file-server.el
 
@@ -440,6 +440,15 @@ response to @code{process}.
 mime-type is determined by calling @code{mm-default-file-encoding} on
 @code{path} or is set to ``application/octet-stream'' if no mime-type
 can be determined.
+@end defun
+
+@anchor{ws-send-directory-list}
+@defun ws-send-directory-list process directory &optional match
+@code{ws-send-directory-list} sends the a listing of the files located
+in @code{directory} to @code{process}.  The list is sent as an HTML
+list of links to the files.  Optional argument @code{match} may be set
+to a regular expression, in which case only those files that match are
+listed.
 @end defun
 
 @anchor{ws-in-directory-p}
