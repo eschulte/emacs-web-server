@@ -5,10 +5,20 @@
 
 * Notes
 * Tasks [15/21]
-** TODO chunked encoding
+** TODO Content and Transfer encodings
+- Content and Transfer encoding values
+  http://www.iana.org/assignments/http-parameters/http-parameters.xhtml
+- http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.6
 - http://en.wikipedia.org/wiki/Chunked_transfer_encoding
 - http://tools.ietf.org/html/rfc1945#section-7.2
 - http://tools.ietf.org/rfc/rfc1945.txt
+
+Some issue as to whether compression is better done as a "Content
+Encoding" which actually changes the content, or as a "Transfer
+Encoding", which doesn't change the content, just the messages.
+
+The latter seems preferable, but possibly less widely supported.  See
+http://stackoverflow.com/questions/11641923/transfer-encoding-gzip-vs-content-encoding-gzip.
 
 ** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
