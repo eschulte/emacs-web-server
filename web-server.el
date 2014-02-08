@@ -547,10 +547,12 @@ Optionally explicitly set MIME-TYPE, otherwise it is guessed by
   (let ((mime (or mime-type
                   (mm-default-file-encoding path)
                   "application/octet-stream")))
-    (ws-response-header proc 200 (cons "Content-type" mime))
     (process-send-string proc
       (with-temp-buffer
         (insert-file-contents-literally path)
+        (ws-response-header proc 200
+          (cons "Content-type" mime)
+          (cons "Content-length" (- (point-max) (point-min))))
         (buffer-string)))))
 
 (defun ws-send-directory-list (proc directory &optional match)
