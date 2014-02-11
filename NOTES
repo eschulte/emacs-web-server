@@ -20,11 +20,26 @@ Encoding", which doesn't change the content, just the messages.
 The latter seems preferable, but possibly less widely supported.  See
 http://stackoverflow.com/questions/11641923/transfer-encoding-gzip-vs-content-encoding-gzip.
 
-Maybe push these behind a single =ws-send-and-end= function with the
-following optional positional arguments.
-- content-encoding
-- signature
-- md5-sum
+- content-coding
+  - compress :: Unix =compress= program (rfc2616)
+  - deflate :: =zlib= (see http://www.iana.org/go/rfc1950) format with
+       =defalte= compression (rfc2616)
+  - exi :: W3c efficient XML (see http://www.w3.org/TR/exi/)
+  - gzip :: GNU zip (rfc2616)
+  - identity :: does nothing
+  - pack200-zip :: specific to Java archives (see
+       http://www.jcp.org/en/jsr/detail?id=200)
+- transfer-coding
+  - chunked :: (rfc2616)
+  - compress :: same as above
+  - deflate :: same as above
+  - gzip :: same as above
+- tail-header
+  - Content-MD5 :: Base64 encoded binary MD5 sum of content
+
+Maybe we can set the coding system of the process with
+=define-coding-system=, specifically using the =:pre-write-conversion=
+flag to e.g., gzip or chunkify the contents.
 
 ** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
@@ -155,6 +170,10 @@ low priority -- just [[*running%20behind%20an%20https%20proxy][run behind an htt
 This will be a pain, and will require expanding [[info:emacs-gnutls]] to
 add support for starting server processes, currently only client
 processes are supported.
+** screen cast?
+- http://en.wikipedia.org/wiki/XVidCap
+- https://aur.archlinux.org/packages/xvidcap/
+
 * Tutorials
 The following tutorials walk through common usage scenarios including
 installing the Emacs web-server and running it behind a proxy.
