@@ -30,6 +30,8 @@ USAGE
 
     [4]  http://eschulte.github.io/emacs-web-server/tutorials/
 
+    Run `make check' to run the included test suite.
+
 DOCUMENTATION
     Run `make doc' to build the texinfo documentation, also available
     online [5].
