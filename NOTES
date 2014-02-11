@@ -4,7 +4,7 @@
 #+Options: ^:{}
 
 * Notes
-* Tasks [15/21]
+* Tasks [17/21]
 ** TODO Content and Transfer encodings
 - Content and Transfer encoding values
   http://www.iana.org/assignments/http-parameters/http-parameters.xhtml
@@ -19,6 +19,12 @@ Encoding", which doesn't change the content, just the messages.
 
 The latter seems preferable, but possibly less widely supported.  See
 http://stackoverflow.com/questions/11641923/transfer-encoding-gzip-vs-content-encoding-gzip.
+
+Maybe push these behind a single =ws-send-and-end= function with the
+following optional positional arguments.
+- content-encoding
+- signature
+- md5-sum
 
 ** DONE web sockets
 - http://en.wikipedia.org/wiki/WebSocket
@@ -58,11 +64,13 @@ Low priority, just [[*running%20behind%20a%20proxy][run behind a proxy]].
 
 *** TODO request timeout
 *** TODO maximum request size
-** TODO authentication [1/2]
+** DONE authentication [2/2]
+   - State "HOLD"       from "TODO"       [2014-02-10 Mon 19:06] \\
+     digest may not be worth it, just run Basic over HTTPS
 *** DONE Basic
 http://en.wikipedia.org/wiki/Basic_access_authentication
 
-*** TODO Digest
+*** CANCELED Digest
 http://en.wikipedia.org/wiki/Digest_access_authentication
 
 If this is implemented, it would be good to implement some safeguards
@@ -150,6 +158,9 @@ processes are supported.
 * Tutorials
 The following tutorials walk through common usage scenarios including
 installing the Emacs web-server and running it behind a proxy.
+Install the Emacs web-server and run =(info "web-server")= to browse
+the full manual within Emacs, or view the HTML version at
+[[http://eschulte.github.io/emacs-web-server/][emacs-web-server]].
 
 ** Installation and running a server
 Installation should be as easy as updating the load path, and
