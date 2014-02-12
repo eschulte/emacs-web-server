@@ -13,10 +13,11 @@
 
 (defvar ws-test-port 8999)
 
-(defun ws-test-curl-to-string (url &optional get-params post-params)
+(defun ws-test-curl-to-string (url &optional get-params post-params curl-flags)
   "Curl URL with optional parameters."
   (async-shell-command
-   (format "curl -m 4 %s %s localhost:%s/%s"
+   (format "curl -m 4 %s %s %s localhost:%s/%s"
+           (or curl-flags "")
            (if get-params
                (mapconcat (lambda (p) (format "-d '%s=%s'" (car p) (cdr p)))
                           get-params " ")
@@ -247,5 +248,32 @@ Content-Type: application/octet-stream
   "Ensure that `ws-web-socket-handshake' conforms to the example in RFC6455."
   (should (string= (ws-web-socket-handshake "dGhlIHNhbXBsZSBub25jZQ==")
                    "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")))
+
+(ert-deftest ws/simple-chunked ()
+  "Test a simple server using chunked transfer encoding."
+  (ws-test-with
+      (lambda (request)
+        (with-slots (process) request
+          (ws-response-header process 200
+            '("Content-type" . "text/plain")
+            '("Transfer-Encoding" . "chunked"))
+          (ws-send process "I am chunked")))
+    (should (string= (ws-test-curl-to-string "") "I am chunked"))))
+
+(ert-deftest ws/simple-gzip ()
+  "Test a simple server using gzip content/transfer encoding."
+  (cl-macrolet ((gzipper (header)
+                         `(ws-test-with
+                              (lambda (request)
+                                (with-slots (process) request
+                                  (ws-response-header process 200
+                                    '("Content-type" . "text/plain")
+                                    '(,header . "gzip"))
+                                  (ws-send process "I am zipped")))
+                            (should (string= (ws-test-curl-to-string
+                                              "" nil nil "--compressed")
+                                             "I am zipped")))))
+    (gzipper "Content-Encoding")
+    (gzipper "Transfer-Encoding")))
 
 (provide 'web-server-test)
