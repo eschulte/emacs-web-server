@@ -220,6 +220,9 @@ function.
                              (ws-call-handler request handlers)
                            :keep-alive))
                        :keep-alive))
+          ;; Properly shut down processes requiring an ending (e.g., chunked)
+          (let ((ender (plist-get (process-plist proc) :ender)))
+            (when ender (process-send-string proc ender)))
           (setq requests (cl-remove-if (lambda (r) (eql proc (process r))) requests))
           (delete-process proc))))))
 
@@ -376,8 +379,6 @@ received and parsed from the network."
       (ws-web-socket-parse-messages message))
     (setf (active message) nil)))
 
-
-
 (defun ws-web-socket-mask (masking-key data)
   (let ((masking-data (apply #'concat (make-list (+ 1 (/ (length data) 4))
                                                  masking-key))))
@@ -510,17 +511,76 @@ See RFC6455."
      string)))
 
 
+;;; Content and Transfer encoding support
+(defvar ws-compress-cmd "compress"
+  "Command used for the \"compress\" Content or Transfer coding.")
+
+(defvar ws-deflate-cmd "zlib-flate -compress"
+  "Command used for the \"deflate\" Content or Transfer coding.")
+
+(defvar ws-gzip-cmd "gzip"
+  "Command used for the \"gzip\" Content or Transfer coding.")
+
+(defmacro ws-encoding-cmd-to-fn (cmd)
+  "Return a function which applies CMD to strings."
+  `(lambda (s)
+     (with-temp-buffer
+       (insert s)
+       (shell-command-on-region (point-min) (point-max) ,cmd nil 'replace)
+       (buffer-string))))
+
+(defun ws-chunk (string)
+  "Convert STRING to a valid chunk for HTTP chunked Transfer-encoding."
+  (format "%x\r\n%s\r\n" (string-bytes string) string))
+
+
 ;;; Convenience functions to write responses
 (defun ws-response-header (proc code &rest headers)
   "Send the headers for an HTTP response to PROC.
 Currently CODE should be an HTTP status code, see
 `ws-status-codes' for a list of known codes."
+  ;; update process to reflect any Content or Transfer encodings
+  (let ((content  (cdr (assoc "Content-Encoding" headers)))
+        (transfer (cdr (assoc "Transfer-Encoding" headers))))
+    (when content
+      (set-process-plist proc
+        (append
+         (list :content-encoding
+               (ecase (intern content)
+                 ((compress x-compress) (ws-encoding-cmd-to-fn ws-compress-cmd))
+                 ((deflate x-deflate)   (ws-encoding-cmd-to-fn ws-deflate-cmd))
+                 ((gzip x-gzip)         (ws-encoding-cmd-to-fn ws-gzip-cmd))
+                 (identity #'identity)
+                 ((exi pack200-zip)
+                  (ws-error proc "`%s' Content-encoding not supported."
+                            content))))
+         (process-plist proc))))
+    (when transfer
+      (set-process-plist proc
+        (append
+         (when (string= transfer "chunked") (list :ender "0\r\n\r\n"))
+         (list :transfer-encoding
+               (ecase (intern transfer)
+                 (chunked  #'ws-chunk)
+                 ((compress x-compress) (ws-encoding-cmd-to-fn ws-compress-cmd))
+                 ((deflate x-deflate)   (ws-encoding-cmd-to-fn ws-deflate-cmd))
+                 ((gzip x-gzip)         (ws-encoding-cmd-to-fn ws-gzip-cmd))))
+         (process-plist proc)))))
   (let ((headers
          (cons
           (format "HTTP/1.1 %d %s" code (cdr (assoc code ws-status-codes)))
           (mapcar (lambda (h) (format "%s: %s" (car h) (cdr h))) headers))))
     (setcdr (last headers) (list "" ""))
     (process-send-string proc (mapconcat #'identity headers "\r\n"))))
+
+(defun ws-send (proc string)
+  "Send STRING to process PROC.
+If any Content or Transfer encodings are in use, apply them to
+STRING before sending."
+  (let
+      ((cc (or (plist-get (process-plist proc) :content-encoding) #'identity))
+       (tc (or (plist-get (process-plist proc) :transfer-encoding) #'identity)))
+    (process-send-string proc (funcall tc (funcall cc string)))))
 
 (defun ws-send-500 (proc &rest msg-and-args)
   "Send 500 \"Internal Server Error\" to PROC with an optional message."
