@@ -191,6 +191,8 @@ These examples demonstrate usage.
 * Org-mode Export::             Export files to HTML and Tex
 * File Upload::                 Upload files and return their sha1sum
 * Web Socket::                  Web socket echo server
+* Gzipped Transfer Encoding::   Gzip content encoding
+* Chunked Transfer Encoding::   Chunked transfer encoding
 @end menu
 
 @node Hello World, Hello World UTF8, Usage Examples, Usage Examples
@@ -313,7 +315,7 @@ $ sha1sum /usr/share/emacs/24.3/etc/COPYING
 8624bcdae55baeef00cd11d5dfcfa60f68710a02  /usr/share/emacs/24.3/etc/COPYING
 @end example
 
-@node Web Socket, Function Index, File Upload, Usage Examples
+@node Web Socket, Chunked Transfer Encoding, File Upload, Usage Examples
 @section Web Socket
 
 Example demonstrating the use of web sockets for full duplex
@@ -339,6 +341,28 @@ handler from which @code{ws-web-socket-connect} is called must return
 the @code{:keep-alive} keyword, as demonstrated in the example.
 
 @verbatiminclude ../examples/009-web-socket.el
+
+@node Gzipped Transfer Encoding, Chunked Transfer Encoding, Web Socket, Usage Examples
+@section Gzipped Transfer Encoding
+
+HTTP Responses may be compressed by setting the ``gzip'' (or
+``compress'' or ``deflate'') content- or transfer-encoding HTTP
+headers in @code{ws-response-header}.  Any further data sent to the
+process using @code{ws-send} will automatically be appropriately
+compressed.
+
+@verbatiminclude ../examples/016-content-encoding-gzip.el
+
+@node Chunked Transfer Encoding, Function Index, Web Socket, Usage Examples
+@section Chunked Transfer Encoding
+
+Similarly, HTTP Responses may be sent using the ``chunked'' transfer
+encoding by passing the appropriate HTTP header to
+@code{ws-response-header}.  Any further data sent to the process using
+@code{ws-send} will automatically be appropriately encoded for chunked
+transfer.
+
+@verbatiminclude ../examples/017-transfer-encoding-chunked.el
 
 @node Function Index, Copying, Usage Examples, Top
 @chapter Function Index
@@ -407,11 +431,13 @@ associated with responding to HTTP requests.
 
 @anchor{ws-response-header}
 @cindex content type
-@defun ws-response-header process code &rest header
-Send the headers required to start an HTTP response to @code{process}.
-@code{process} should be a @code{ws-request} @code{process} of an
-active request.  For example start a standard 200 ``OK'' HTML response
-with the following.
+@defun ws-response-header process code &rest headers
+Send the headers required to start an HTTP response to @code{proc}.
+@code{proc} should be a @code{ws-request} @code{proc} of an active
+request.
+
+For example start a standard 200 ``OK'' HTML response with the
+following.
 
 @example
 (ws-response-header process 200 '("Content-type" . "text/html"))
@@ -425,6 +451,24 @@ encoded response with the following.
             '("Content-type" . "text/plain; charset=utf-8"))
 @end example
 
+Additionally, when ``Content-Encoding'' or ``Transfer-Encoding''
+headers are supplied any subsequent data written to @code{proc} using
+@code{ws-send} will be encoded appropriately including sending the
+appropriate data upon the end of transmission for chunked transfer
+encoding.
+
+For example with the header @code{("Content-Encoding" . "gzip")}, any
+data subsequently written to @code{proc} using @code{ws-send} will be
+compressed using the command specified in @code{ws-gzip-cmd}.  See
+@ref{Gzipped Transfer Encoding} and @ref{Chunked Transfer Encoding}
+for more complete examples.
+
+@end defun
+
+@anchor{ws-send}
+@defun ws-send proc string
+Send @code{string} to process @code{proc}.  If any Content or Transfer
+encodings are in use, apply them to @code{string} before sending.
 @end defun
 
 @anchor{ws-send-500}
@@ -514,6 +558,27 @@ socket messages received from the client.
     @result{} #<process ws-server <127.0.0.1:34921>>
 @end example
 @end defun
+
+@section Customization Variables
+The following variables may be changed to control the behavior of the
+web server.  Specifically the @code{ws-*-cmd} variables specify the
+command lines used to compress data according to content and or
+transfer encoding HTTP headers passed to @ref{ws-response-header}.
+
+@anchor{ws-compress-cmd}
+@defvar ws-compress-cmd
+Command used for the ``compress'' Content or Transfer coding.
+@end defvar
+
+@anchor{ws-deflate-cmd}
+@defvar ws-deflate-cmd
+Command used for the ``deflate'' Content or Transfer coding.
+@end defvar
+
+@anchor{ws-gzip-cmd}
+@defvar ws-gzip-cmd
+Command used for the ``gzip'' Content or Transfer coding.
+@end defvar
 
 @node Copying, GNU Free Documentation License, Function Index, Top
 @appendix GNU GENERAL PUBLIC LICENSE

@@ -1,4 +1,4 @@
-;;; transfer-encoding-chunked.el -- manual chunked transfer encoding
+;;; transfer-encoding-chunked.el -- chunked transfer encoding
 (ws-start
  (lambda (request)
    (let ((s "

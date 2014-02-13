@@ -1,4 +1,4 @@
-;;; content-encoding-gzip.el -- manual application of gzip content encoding
+;;; content-encoding-gzip.el -- gzip content encoding
 (ws-start
  (lambda (request)
    (with-slots (process headers) request

@@ -537,8 +537,17 @@ See RFC6455."
 ;;; Convenience functions to write responses
 (defun ws-response-header (proc code &rest headers)
   "Send the headers for an HTTP response to PROC.
-Currently CODE should be an HTTP status code, see
-`ws-status-codes' for a list of known codes."
+CODE should be an HTTP status code, see `ws-status-codes' for a
+list of known codes.
+
+When \"Content-Encoding\" or \"Transfer-Encoding\" headers are
+supplied any subsequent data written to PROC using `ws-send' will
+be encoded appropriately including sending the appropriate data
+upon the end of transmission for chunked transfer encoding.
+
+For example with the header `(\"Content-Encoding\" . \"gzip\")',
+any data subsequently written to PROC using `ws-send' will be
+compressed using the command specified in `ws-gzip-cmd'."
   ;; update process to reflect any Content or Transfer encodings
   (let ((content  (cdr (assoc "Content-Encoding" headers)))
         (transfer (cdr (assoc "Transfer-Encoding" headers))))
