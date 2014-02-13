@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This file documents the Emacs Web Server (ws)
+
+Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with the Invariant Section being "GNU GENERAL PUBLIC LICENSE,"
+A copy of the license is included in the section entitled
+"GNU Free Documentation License." -->
+<!-- Created by GNU Texinfo 5.2, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Emacs Web Server (ws) User Manual: Gzipped Transfer Encoding</title>
+
+<meta name="description" content="Emacs Web Server (ws) User Manual: Gzipped Transfer Encoding">
+<meta name="keywords" content="Emacs Web Server (ws) User Manual: Gzipped Transfer Encoding">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="Index.html#Index" rel="index" title="Index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="Usage-Examples.html#Usage-Examples" rel="up" title="Usage Examples">
+<link href="Chunked-Transfer-Encoding.html#Chunked-Transfer-Encoding" rel="next" title="Chunked Transfer Encoding">
+<link href="Web-Socket.html#Web-Socket" rel="prev" title="Web Socket">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.indentedblock {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smallindentedblock {margin-left: 3.2em; font-size: smaller}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style:oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:nowrap}
+span.nolinebreak {white-space:nowrap}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+<a name="Gzipped-Transfer-Encoding"></a>
+<div class="header">
+<p>
+Next: <a href="Chunked-Transfer-Encoding.html#Chunked-Transfer-Encoding" accesskey="n" rel="next">Chunked Transfer Encoding</a>, Previous: <a href="Web-Socket.html#Web-Socket" accesskey="p" rel="prev">Web Socket</a>, Up: <a href="Usage-Examples.html#Usage-Examples" accesskey="u" rel="up">Usage Examples</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="Index.html#Index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Gzipped-Transfer-Encoding-1"></a>
+<h3 class="section">4.11 Gzipped Transfer Encoding</h3>
+
+<p>HTTP Responses may be compressed by setting the &ldquo;gzip&rdquo; (or
+&ldquo;compress&rdquo; or &ldquo;deflate&rdquo;) content- or transfer-encoding HTTP
+headers in <code>ws-response-header</code>.  Any further data sent to the
+process using <code>ws-send</code> will automatically be appropriately
+compressed.
+</p>
+<pre class="verbatim">;;; content-encoding-gzip.el -- manual application of gzip content encoding
+(ws-start
+ (lambda (request)
+   (with-slots (process headers) request
+     (ws-response-header process 200
+       '(&quot;Content-type&quot; . &quot;text/plain; charset=utf-8&quot;)
+       '(&quot;Content-Encoding&quot; . &quot;x-gzip&quot;))
+     (let ((s &quot;Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec
+hendrerit tempor tellus. Donec pretium posuere tellus. Proin quam
+nisl, tincidunt et, mattis eget, convallis nec, purus. Cum sociis
+natoque penatibus et magnis dis parturient montes, nascetur
+ridiculus mus. Nulla posuere. Donec vitae dolor. Nullam tristique
+diam non turpis. Cras placerat accumsan nulla. Nullam rutrum. Nam
+vestibulum accumsan nisl.
+
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec
+hendrerit tempor tellus. Donec pretium posuere tellus. Proin quam
+nisl, tincidunt et, mattis eget, convallis nec, purus. Cum sociis
+natoque penatibus et magnis dis parturient montes, nascetur
+ridiculus mus. Nulla posuere. Donec vitae dolor. Nullam tristique
+diam non turpis. Cras placerat accumsan nulla. Nullam rutrum. Nam
+vestibulum accumsan nisl.&quot;))
+       (ws-send process s))))
+ 9016)
+</pre>
+
+
+
+</body>
+</html>

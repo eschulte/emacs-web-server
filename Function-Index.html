@@ -25,7 +25,7 @@ A copy of the license is included in the section entitled
 <link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="index.html#Top" rel="up" title="Top">
 <link href="Copying.html#Copying" rel="next" title="Copying">
-<link href="Web-Socket.html#Web-Socket" rel="prev" title="Web Socket">
+<link href="Chunked-Transfer-Encoding.html#Chunked-Transfer-Encoding" rel="prev" title="Chunked Transfer Encoding">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
@@ -135,11 +135,13 @@ associated with responding to HTTP requests.
 </p>
 <a name="ws_002dresponse_002dheader"></a><a name="index-content-type"></a>
 <dl>
-<dt><a name="index-ws_002dresponse_002dheader"></a>Function: <strong>ws-response-header</strong> <em>process code &amp;rest header</em></dt>
-<dd><p>Send the headers required to start an HTTP response to <code>process</code>.
-<code>process</code> should be a <code>ws-request</code> <code>process</code> of an
-active request.  For example start a standard 200 &ldquo;OK&rdquo; HTML response
-with the following.
+<dt><a name="index-ws_002dresponse_002dheader"></a>Function: <strong>ws-response-header</strong> <em>process code &amp;rest headers</em></dt>
+<dd><p>Send the headers required to start an HTTP response to <code>proc</code>.
+<code>proc</code> should be a <code>ws-request</code> <code>proc</code> of an active
+request.
+</p>
+<p>For example start a standard 200 &ldquo;OK&rdquo; HTML response with the
+following.
 </p>
 <div class="example">
 <pre class="example">(ws-response-header process 200 '(&quot;Content-type&quot; . &quot;text/html&quot;))
@@ -153,7 +155,25 @@ encoded response with the following.
             '(&quot;Content-type&quot; . &quot;text/plain; charset=utf-8&quot;))
 </pre></div>
 
+<p>Additionally, when &ldquo;Content-Encoding&rdquo; or &ldquo;Transfer-Encoding&rdquo;
+headers are supplied any subsequent data written to <code>proc</code> using
+<code>ws-send</code> will be encoded appropriately including sending the
+appropriate data upon the end of transmission for chunked transfer
+encoding.
+</p>
+<p>For example with the header <code>(&quot;Content-Encoding&quot; . &quot;gzip&quot;)</code>, any
+data subsequently written to <code>proc</code> using <code>ws-send</code> will be
+compressed using the command specified in <code>ws-gzip-cmd</code>.  See
+<a href="Gzipped-Transfer-Encoding.html#Gzipped-Transfer-Encoding">Gzipped Transfer Encoding</a> and <a href="Chunked-Transfer-Encoding.html#Chunked-Transfer-Encoding">Chunked Transfer Encoding</a>
+for more complete examples.
+</p>
 </dd></dl>
+
+<a name="ws_002dsend"></a><dl>
+<dt><a name="index-ws_002dsend"></a>Function: <strong>ws-send</strong> <em>proc string</em></dt>
+<dd><p>Send <code>string</code> to process <code>proc</code>.  If any Content or Transfer
+encodings are in use, apply them to <code>string</code> before sending.
+</p></dd></dl>
 
 <a name="ws_002dsend_002d500"></a><dl>
 <dt><a name="index-ws_002dsend_002d500"></a>Function: <strong>ws-send-500</strong> <em>process &amp;rest msg-and-args</em></dt>
@@ -242,6 +262,28 @@ socket messages received from the client.
     &rArr; #&lt;process ws-server &lt;127.0.0.1:34921&gt;&gt;
 </pre></div>
 </dd></dl>
+
+<a name="Customization-Variables"></a>
+<h3 class="section">5.4 Customization Variables</h3>
+<p>The following variables may be changed to control the behavior of the
+web server.  Specifically the <code>ws-*-cmd</code> variables specify the
+command lines used to compress data according to content and or
+transfer encoding HTTP headers passed to <a href="#ws_002dresponse_002dheader">ws-response-header</a>.
+</p>
+<a name="ws_002dcompress_002dcmd"></a><dl>
+<dt><a name="index-ws_002dcompress_002dcmd"></a>Variable: <strong>ws-compress-cmd</strong></dt>
+<dd><p>Command used for the &ldquo;compress&rdquo; Content or Transfer coding.
+</p></dd></dl>
+
+<a name="ws_002ddeflate_002dcmd"></a><dl>
+<dt><a name="index-ws_002ddeflate_002dcmd"></a>Variable: <strong>ws-deflate-cmd</strong></dt>
+<dd><p>Command used for the &ldquo;deflate&rdquo; Content or Transfer coding.
+</p></dd></dl>
+
+<a name="ws_002dgzip_002dcmd"></a><dl>
+<dt><a name="index-ws_002dgzip_002dcmd"></a>Variable: <strong>ws-gzip-cmd</strong></dt>
+<dd><p>Command used for the &ldquo;gzip&rdquo; Content or Transfer coding.
+</p></dd></dl>
 
 <hr>
 <div class="header">
