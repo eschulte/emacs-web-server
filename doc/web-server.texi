@@ -1,10 +1,10 @@
 \input texinfo
 @c @setfilename emacs-web-server.info
 @documentencoding utf-8
-@settitle Emacs Web Server (ws) User Manual
+@settitle Emacs Web Server (web-server) User Manual
 
 @copying
-This file documents the Emacs Web Server (ws)
+This file documents the Emacs Web Server (web-server)
 
 Copyright (C) 2013 Eric Schulte <schulte.eric@@gmail.com>
 
@@ -18,13 +18,13 @@ A copy of the license is included in the section entitled
 @end quotation
 @end copying
 
-@dircategory Emacs misc features
+@dircategory Emacs
 @direntry
-* Emacs Web Server: (ws).      Web Server for Emacs.
+* Web Server: (web-server).     Web Server for Emacs.
 @end direntry
 
 @titlepage
-@title Emacs Web Server (ws) User Manual
+@title Emacs Web Server (web-server) User Manual
 @page
 @vskip 0pt plus 1filll
 @insertcopying
