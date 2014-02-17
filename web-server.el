@@ -3,7 +3,10 @@
 ;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
-;; Keywords: http
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "24.3"))
+;; Keywords: http, server, network
+;; URL: https://github.com/eschulte/emacs-web-server
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Commentary:

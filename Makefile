@@ -27,11 +27,12 @@ clean:
 	$(MAKE) -C doc/ $(MAKECMDGOALS)
 
 # Packaging
+PARSE=grep "$(1):" web-server.el|sed 's/^.*$(1): //'
 NAME=web-server
-VERSION=0.1.0
-DOC=Emacs Web Server
-REQ=((emacs "24.3"))
-DEFPKG=(define-package "$(NAME)" "$(VERSION)" "$(DOC)" (quote $(REQ)))
+VERSION=$(shell $(call PARSE,Version))
+DOC=$(shell head -1 web-server.el|sed 's/^.*--- //')
+REQ=$(shell $(call PARSE,Package-Requires))
+DEFPKG=(define-package "$(NAME)" "$(VERSION)"\n  "$(DOC)"\n  (quote $(REQ)))
 PACKAGE=$(NAME)-$(VERSION)
 
 $(PACKAGE): $(filter-out web-server-test.el, $(SRC)) doc/web-server.info doc/dir
@@ -42,6 +43,5 @@ $(PACKAGE): $(filter-out web-server-test.el, $(SRC)) doc/web-server.info doc/dir
 
 $(PACKAGE).tar: $(PACKAGE)
 	tar cf $@ $<
-	rm -rf $<
 
 package: $(PACKAGE).tar
