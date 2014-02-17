@@ -13,9 +13,35 @@ src: $(SRC)
 doc:
 	$(MAKE) -C doc/
 
+doc/web-server.info:
+	$(MAKE) -C doc/ web-server.info
+
+doc/dir:
+	$(MAKE) -C doc/ dir
+
 check: $(SRC)
 	$(BATCH) -l cl -l ert -l web-server-test -f ert-run-tests-batch-and-exit
 
 clean:
-	rm -f $(ELC)
+	rm -rf $(ELC) $(PACKAGE) $(PACKAGE).tar
 	$(MAKE) -C doc/ $(MAKECMDGOALS)
+
+# Packaging
+NAME=web-server
+VERSION=0.1.0
+DOC=Emacs Web Server
+REQ=((emacs "24.3"))
+DEFPKG=(define-package "$(NAME)" "$(VERSION)" "$(DOC)" (quote $(REQ)))
+PACKAGE=$(NAME)-$(VERSION)
+
+$(PACKAGE): $(filter-out web-server-test.el, $(SRC)) doc/web-server.info doc/dir
+	mkdir -p $(PACKAGE)
+	cp $^ $(PACKAGE)
+	sed -n '/;;; Commentary:/,/;;; Code:/p' web-server.el|tail -n+3|head -n-2|cut -c4- >$(PACKAGE)/README
+	echo -e '$(DEFPKG)' > $(PACKAGE)/$(NAME)-pkg.el
+
+$(PACKAGE).tar: $(PACKAGE)
+	tar cf $@ $<
+	rm -rf $<
+
+package: $(PACKAGE).tar
