@@ -249,6 +249,15 @@ Content-Type: application/octet-stream
   (should (string= (ws-web-socket-handshake "dGhlIHNhbXBsZSBub25jZQ==")
                    "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")))
 
+(ert-deftest ws/web-socket-frame ()
+  "Test WebSocket frame encoding for the different varint payload lengths:
+   0-125, 126-64k, 64k-2^64."
+  (should (string= (ws-web-socket-frame "short") "\201short"))
+  (should (string= (substring (ws-web-socket-frame (make-string 126 ?a))
+                              0 5) "\201~ ~a"))
+  (should (string= (substring (ws-web-socket-frame (make-string 65536 ?a))
+                              0 11) "\201       a")))
+
 (ert-deftest ws/simple-chunked ()
   "Test a simple server using chunked transfer encoding."
   (ws-test-with
