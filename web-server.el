@@ -497,20 +497,20 @@ See RFC6455."
     (concat
      (cond
       ((< len 126) (unibyte-string (logior (lsh fin 7) opcode) len))
-      ((= len 126) (unibyte-string (logior (lsh fin 7) opcode) 126
-                                   ;; extended 16-bit length
-                                   (logand (lsh len -8) 255)
-                                   (logand      len     255)))
-      ((> len 126) (unibyte-string (logior (lsh fin 7) opcode) 127
-                                   ;; more extended 64-bit length
-                                   (logand (lsh len -56) 255)
-                                   (logand (lsh len -48) 255)
-                                   (logand (lsh len -40) 255)
-                                   (logand (lsh len -32) 255)
-                                   (logand (lsh len -24) 255)
-                                   (logand (lsh len -16) 255)
-                                   (logand (lsh len -8)  255)
-                                   (logand      len      255))))
+      ((< len 65536) (unibyte-string (logior (lsh fin 7) opcode) 126
+                                     ;; extended 16-bit length
+                                     (logand (lsh len -8) 255)
+                                     (logand      len     255)))
+      (t (unibyte-string (logior (lsh fin 7) opcode) 127
+                         ;; more extended 64-bit length
+                         (logand (lsh len -56) 255)
+                         (logand (lsh len -48) 255)
+                         (logand (lsh len -40) 255)
+                         (logand (lsh len -32) 255)
+                         (logand (lsh len -24) 255)
+                         (logand (lsh len -16) 255)
+                         (logand (lsh len -8)  255)
+                         (logand      len      255))))
      string)))
 
 
