@@ -1,6 +1,6 @@
 ;;; web-server.el --- Emacs Web Server
 
-;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
+;; Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
 ;; Maintainer: Eric Schulte <schulte.eric@gmail.com>
