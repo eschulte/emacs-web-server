@@ -3,6 +3,7 @@
 ;; Copyright (C) 2013 Eric Schulte <schulte.eric@gmail.com>
 
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
+;; Maintainer: Eric Schulte <schulte.eric@gmail.com>
 ;; Version: 0.1.0
 ;; Package-Requires: ((emacs "24.3"))
 ;; Keywords: http, server, network
