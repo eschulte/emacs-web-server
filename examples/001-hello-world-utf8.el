@@ -1,4 +1,6 @@
 ;;; hello-world-utf8.el --- utf8 hello world server using Emacs Web Server
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (ws-start
  (lambda (request)
    (with-slots (process headers) request

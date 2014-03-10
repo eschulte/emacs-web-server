@@ -1,4 +1,6 @@
 ;;; auto-mode-server.el --- files with fontification from the `auto-mode-alist'
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (require 'htmlize)
 
 (lexical-let ((docroot default-directory))

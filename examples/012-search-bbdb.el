@@ -1,4 +1,6 @@
 ;;; search-bbdb.el --- search the Big Brother Data Base for a supplied name
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (ws-start
  (lambda (request)
    (with-slots (process headers) request

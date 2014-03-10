@@ -1,4 +1,6 @@
 ;;; file-server.el --- serve any files using Emacs Web Server
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (lexical-let ((docroot default-directory))
   (ws-start
    (lambda (request)

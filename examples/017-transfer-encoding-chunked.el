@@ -1,4 +1,6 @@
 ;;; transfer-encoding-chunked.el -- chunked transfer encoding
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (ws-start
  (lambda (request)
    (let ((s "

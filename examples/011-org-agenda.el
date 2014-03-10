@@ -1,4 +1,6 @@
 ;;; org-agenda.el --- display the Org-mode agenda
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (require 'htmlize)
 
 (ws-start

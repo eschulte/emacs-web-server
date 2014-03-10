@@ -1,5 +1,7 @@
 ;;; org-json.el --- Serve Org-mode pages as json
 ;; suggested by nicferrier
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (require 'json)
 (lexical-let ((docroot "/tmp/"))
   (ws-start

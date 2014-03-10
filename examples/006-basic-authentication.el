@@ -1,4 +1,6 @@
 ;;; basic-authentication.el --- basic authentication
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (lexical-let ((users '(("foo" . "bar")
                        ("baz" . "qux"))))
   (ws-start

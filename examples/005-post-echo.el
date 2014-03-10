@@ -1,4 +1,6 @@
 ;;; post-echo.el --- echo back posted message using Emacs Web Server
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (ws-start
  '(((:POST . ".*") .
     (lambda (request)

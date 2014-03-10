@@ -1,4 +1,6 @@
 ;;; url-param-echo.el --- echo back url-paramed message using Emacs Web Server
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (ws-start
  '(((:GET . ".*") .
     (lambda (request)

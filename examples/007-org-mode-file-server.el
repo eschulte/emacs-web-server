@@ -1,4 +1,6 @@
 ;;; org-mode-file-server.el --- serve on-demand exported Org-mode files
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (lexical-let ((docroot "/tmp/"))
   (ws-start
    (lambda (request)

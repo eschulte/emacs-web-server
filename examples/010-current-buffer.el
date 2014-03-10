@@ -1,4 +1,6 @@
 ;;; current-buffer.el --- Show the current Emacs buffer
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (require 'htmlize)
 
 (ws-start

@@ -1,4 +1,6 @@
 ;;; file-upload.el --- use an uploaded file
+;; Copyright (C) 2014  Free Software Foundation, Inc.
+
 (ws-start
  '(((:POST . ".*") .
     (lambda (request)
