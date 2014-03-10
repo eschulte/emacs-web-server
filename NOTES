@@ -182,8 +182,10 @@ the full manual within Emacs, or view the HTML version at
 [[http://eschulte.github.io/emacs-web-server/][emacs-web-server]].
 
 ** Installation and running a server
-Installation should be as easy as updating the load path, and
-requiring =web-server=.  More complete instructions are below.
+Most easily installable through the GNU ELPA, run =M-x
+package-list-packages= select =web-server= and install.  Alternately,
+install from the git repository at
+https://github.com/eschulte/emacs-web-server and update your the load.
 
 1. Ensure that you have Emacs version 24 or greater installed.
 
