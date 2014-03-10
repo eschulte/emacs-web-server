@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Tutorials</title>
-<!-- 2014-02-10 Mon 19:11 -->
+<!-- 2014-03-10 Mon 10:46 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <style type="text/css">
@@ -165,8 +165,10 @@ the full manual within Emacs, or view the HTML version at
 <h2 id="sec-1"><span class="section-number-2">1</span> Installation and running a server</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-Installation should be as easy as updating the load path, and
-requiring <code>web-server</code>.  More complete instructions are below.
+Most easily installable through the GNU ELPA, run <code>M-x
+package-list-packages</code> select <code>web-server</code> and install.  Alternately,
+install from the git repository at
+<a href="https://github.com/eschulte/emacs-web-server">https://github.com/eschulte/emacs-web-server</a> and update your the load.
 </p>
 
 <ol class="org-ol">
@@ -229,7 +231,7 @@ following.
 <div class="org-src-container">
 
 <pre class="src src-emacs-lisp"><span style="color: #7f7f7f;">(</span>add-to-list 'load-path <span style="color: #e9b96e;">"path/to/emacs-web-server"</span><span style="color: #7f7f7f;">)</span>
-<span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">require</span> '<span style="color: #e6a8df;">web-server</span><span style="color: #7f7f7f;">)</span>
+<span style="color: #7f7f7f;">(</span><span style="color: #b4fa70;">require</span> '<span style="color: #e9b2e3;">web-server</span><span style="color: #7f7f7f;">)</span>
 </pre>
 </div>
 </li>
@@ -249,7 +251,7 @@ instance.
 </div>
 </li>
 
-<li>Browse to <a href="http://localhost:9000">http://localhost:9000</a> to see that the web-server is
+<li>Browse to <a href="http://localhost:9000/">http://localhost:9000/</a> to see that the web-server is
 running.
 </li>
 
@@ -263,7 +265,7 @@ running.
 <div class="outline-text-2" id="text-2">
 <p>
 Public-facing instance of the Emacs web-server should be run behind a
-more established web server such as <a href="http://httpd.apache.org/">Apache</a> or <a href="http://wiki.nginx.org">Nginx</a> to provide
+more established web server such as <a href="http://httpd.apache.org/">Apache</a> or <a href="http://wiki.nginx.org/">Nginx</a> to provide
 additional robustness and security.
 </p>
 
@@ -351,8 +353,8 @@ proxy.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2014-02-10 Mon 19:11</p>
-<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.5c)</p>
+<p class="date">Created: 2014-03-10 Mon 10:46</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.50.2 (<a href="http://orgmode.org">Org</a> mode 8.2.5h)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
