@@ -658,7 +658,9 @@ used to limit the files sent."
 
 (defun ws-in-directory-p (parent path)
   "Check if PATH is under the PARENT directory.
-If so return PATH, if not return nil."
+If so return PATH, if not return nil.  Note: the PARENT directory
+must be full expanded as with `expand-file-name' and should not
+contain e.g., \"~\" for a user home directory."
   (if (zerop (length path))
       parent
     (let ((expanded (expand-file-name path parent)))
