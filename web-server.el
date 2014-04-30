@@ -98,7 +98,7 @@ port 8080.
   (ws-start
    (lambda (request)
      (with-slots (process headers) request
-       (process-send-string proc
+       (process-send-string process
         \"HTTP/1.1 200 OK\\r\\nContent-Type: text/plain\\r\\n\\r\\nhello world\")))
    8080)
 
