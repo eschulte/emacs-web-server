@@ -126,6 +126,7 @@ function.
            :server t
            :nowait t
            :family 'ipv4
+           :coding 'no-conversion
            :plist (append (list :server server)
                           (when log (list :log-buffer log)))
            :log (when log
