@@ -28,14 +28,14 @@
 (defun ws-test-curl-to-string (url &optional get-params post-params curl-flags)
   "Curl URL with optional parameters."
   (async-shell-command
-   (format "curl -m 4 %s %s %s localhost:%s/%s"
+   (format "curl -s -m 4 %s %s %s localhost:%s/%s"
            (or curl-flags "")
            (if get-params
                (mapconcat (lambda (p) (format "-d '%s=%s'" (car p) (cdr p)))
                           get-params " ")
              "")
            (if post-params
-               (mapconcat (lambda (p) (format "-s -F '%s=%s'" (car p) (cdr p)))
+               (mapconcat (lambda (p) (format "-F '%s=%s'" (car p) (cdr p)))
                           post-params " ")
              "")
            ws-test-port url))
