@@ -4,8 +4,8 @@
 
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
 ;; Maintainer: Eric Schulte <schulte.eric@gmail.com>
-;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3"))
+;; Version: 0.1.1
+;; Package-Requires: ((emacs "24.4"))
 ;; Keywords: http, server, network
 ;; URL: https://github.com/eschulte/emacs-web-server
 

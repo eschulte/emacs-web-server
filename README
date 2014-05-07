@@ -4,7 +4,7 @@ DESCRIPTION
     A web server in Emacs running handlers written in Emacs Lisp.
 
 REQUIREMENTS
-    Emacs 24.3 or later.
+    Emacs 24.4 or later.
 
 STATUS
     Supports HTTP GET and POST requests including URL-encoded
