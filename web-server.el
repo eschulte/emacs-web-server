@@ -124,7 +124,7 @@ function.
            :service (port server)
            :filter 'ws-filter
            :server t
-           :nowait t
+           :nowait nil
            :family 'ipv4
            :coding 'no-conversion
            :plist (append (list :server server)
