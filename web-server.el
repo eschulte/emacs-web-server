@@ -43,6 +43,7 @@
 
 ;;; Code:
 (require 'web-server-status-codes)
+(require 'web-server-content-types)
 (require 'mail-parse)             ; to parse multipart data in headers
 (require 'mm-encode)              ; to look-up mime types for files
 (require 'url-util)               ; to decode url-encoded params
