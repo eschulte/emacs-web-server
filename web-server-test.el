@@ -177,7 +177,11 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
 - three
 - four
 
-"))))
+"))
+            (should (string= (cdr (assoc :CONTENT-TYPE headers))
+                             "application/x-www-form-urlencoded; charset=UTF-8"))
+            (should (string= (oref request body)
+                             "org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))))
       (ws-stop server))))
 
 (ert-deftest ws/simple-post ()
