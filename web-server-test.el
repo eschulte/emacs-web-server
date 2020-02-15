@@ -184,6 +184,39 @@ org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
                              "org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org"))))
       (ws-stop server))))
 
+(ert-deftest ws/parse-json-data ()
+  "Ensure we can send arbitrary data through to the handler
+
+The handler can then parse it itself."
+  (let ((server (ws-start nil ws-test-port))
+        (request (make-instance 'ws-request)))
+    (unwind-protect
+        (progn
+          (setf (pending request)
+                "POST /complex.org HTTP/1.1
+Host: localhost:4444
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+DNT: 1
+Content-Type: application/json
+Referer: http://localhost:4444/complex.org
+Content-Length: 33
+Cookie: __utma=111872281.1462392269.1345929539.1345929539.1345929539.1
+Connection: keep-alive
+Pragma: no-cache
+Cache-Control: no-cache
+
+{\"some example\": \"json data\"}")
+          (ws-parse-request request)
+          (let ((headers (cdr (headers request))))
+            (should (string= (cdr (assoc :CONTENT-TYPE headers))
+                             "application/json"))
+            (should (string= (oref request body)
+                             "{\"some example\": \"json data\"}")))
+      (ws-stop server)))))
+
 (ert-deftest ws/simple-post ()
   "Test a simple POST server."
   (ws-test-with
