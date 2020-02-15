@@ -302,13 +302,13 @@ Return non-nil only when parsing is complete."
                   ;; will require special parsing.  Thus we will note
                   ;; the type in the CONTEXT variable for parsing
                   ;; dispatch above.
-                  (if (and (caar header) (eql (caar header) :CONTENT-TYPE))
-                      (cl-destructuring-bind (type &rest data)
-                          (mail-header-parse-content-type (cdar header))
-                        (setq boundary (cdr (assoc 'boundary data)))
-                        (setq context (intern (downcase type))))
-                    ;; All other headers are collected directly.
-                    (setcdr (last headers) header)))))
+                  (when (and (caar header) (eql (caar header) :CONTENT-TYPE))
+                    (cl-destructuring-bind (type &rest data)
+                        (mail-header-parse-content-type (cdar header))
+                      (setq boundary (cdr (assoc 'boundary data)))
+                      (setq context (intern (downcase type)))))
+                  ;; All other headers are collected directly.
+                  (setcdr (last headers) header))))
             (setq index tmp)))))
     (setf (active request) nil)
     nil))
