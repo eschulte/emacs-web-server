@@ -63,7 +63,8 @@
    (boundary :initarg :boundary :accessor boundary :initform nil)
    (index    :initarg :index    :accessor index    :initform 0)
    (active   :initarg :active   :accessor active   :initform nil)
-   (headers  :initarg :headers  :accessor headers  :initform (list nil))))
+   (headers  :initarg :headers  :accessor headers  :initform (list nil))
+   (body     :initarg :body     :accessor body     :initform "")))
 
 (defvar ws-servers nil
   "List holding all web servers.")
@@ -247,30 +248,43 @@ function.
   "Parse request STRING from REQUEST with process PROC.
 Return non-nil only when parsing is complete."
   (catch 'finished-parsing-headers
-    (with-slots (process pending context boundary headers index) request
+    (with-slots (process pending context boundary headers body index) request
       (let ((delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
             ;; Track progress through string, always work with the
             ;; section of string between INDEX and NEXT-INDEX.
-            next-index)
+            next-index
+            body-stored)
         ;; parse headers and append to request
         (while (setq next-index (string-match delimiter pending index))
           (let ((tmp (+ next-index (length delimiter))))
             (if (= index next-index) ; double \r\n ends current run of headers
-                (case context
-                  ;; Parse URL data.
-                  ;; http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4
-                  (application/x-www-form-urlencoded
-                   (mapc (lambda (pair) (setcdr (last headers) (list pair)))
-                         (ws-parse-query-string
-                          (replace-regexp-in-string
-                           "\\+" " "
-                           (ws-trim (substring pending index)))))
-                   (throw 'finished-parsing-headers t))
-                  ;; Set custom delimiter for multipart form data.
-                  (multipart/form-data
-                   (setq delimiter (concat "\r\n--" boundary)))
-                  ;; No special context so we're done.
-                  (t (throw 'finished-parsing-headers t)))
+                (progn
+                  ;; Store the body
+                  (unless
+                      ;; Multipart form data has multiple passes - store on
+                      ;; first pass only.
+                      body-stored
+                    (let ((after-headers (substring pending index)))
+                      (when (string-prefix-p "\r\n" after-headers)
+                        (setq body
+                              ;; Trim off the additional CRLF
+                              (substring after-headers 2))))
+                    (setq body-stored t))
+                  (case context
+                    ;; Parse URL data.
+                    ;; http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4
+                    (application/x-www-form-urlencoded
+                     (mapc (lambda (pair) (setcdr (last headers) (list pair)))
+                           (ws-parse-query-string
+                            (replace-regexp-in-string
+                             "\\+" " "
+                             (ws-trim (substring pending index)))))
+                     (throw 'finished-parsing-headers t))
+                    ;; Set custom delimiter for multipart form data.
+                    (multipart/form-data
+                     (setq delimiter (concat "\r\n--" boundary)))
+                    ;; No special context so we're done.
+                    (t (throw 'finished-parsing-headers t))))
               (if (eql context 'multipart/form-data)
                   (progn
                     (setcdr (last headers)
