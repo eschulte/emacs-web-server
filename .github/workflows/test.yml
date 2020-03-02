@@ -17,4 +17,4 @@ jobs:
         version: ${{ matrix.emacs_version }}
     - uses: actions/checkout@v1
     - name: Run tests
-      run: make check
+      run: make src check
