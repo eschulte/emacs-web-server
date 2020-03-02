@@ -1,4 +1,4 @@
-;;; web-server-status-codes.el --- Emacs Web Server HTML status codes
+;;; web-server-status-codes.el --- Emacs Web Server HTML status codes  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013-2014  Free Software Foundation, Inc.
 

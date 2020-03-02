@@ -1,4 +1,4 @@
-;;; web-server-test.el --- Test the Emacs Web Server
+;;; web-server-test.el --- Test the Emacs Web Server  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013-2014  Free Software Foundation, Inc.
 
