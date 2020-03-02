@@ -58,9 +58,9 @@
   (ws-test-with (mapcar (lambda (letter)
                            `((:GET . ,letter) .
                              (lambda (request)
-                               (ws-response-header (process request) 200
+                               (ws-response-header (ws-process request) 200
                                  '("Content-type" . "text/plain"))
-                               (process-send-string (process request)
+                               (process-send-string (ws-process request)
                                  (concat "returned:" ,letter)))))
                          '("a" "b"))
     (should (string= "returned:a" (ws-test-curl-to-string "a")))
@@ -71,9 +71,9 @@
   (ws-test-with
       '(((lambda (_) t) .
          (lambda (request)
-           (ws-response-header (process request) 200
+           (ws-response-header (ws-process request) 200
              '("Content-type" . "text/plain"))
-           (process-send-string (process request) "hello world"))))
+           (process-send-string (ws-process request) "hello world"))))
     (should (string= (ws-test-curl-to-string "") "hello world"))))
 
 (ert-deftest ws/removed-from-ws-servers-after-stop ()
@@ -89,7 +89,7 @@
         (request (make-instance 'ws-request)))
     (unwind-protect
         (progn
-          (setf (pending request)
+          (setf (oref request pending)
                 "GET / HTTP/1.1
 Host: localhost:7777
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -102,7 +102,7 @@ Connection: keep-alive
 
 ")
           (ws-parse-request request)
-          (let ((headers (cdr (headers request))))
+          (let ((headers (cdr (oref request headers))))
             (should (string= (cdr (assoc :ACCEPT-ENCODING headers))
                              "gzip, deflate"))
             (should (string= (cdr (assoc :GET headers)) "/"))
@@ -114,7 +114,7 @@ Connection: keep-alive
         (request (make-instance 'ws-request)))
     (unwind-protect
         (progn
-          (setf (pending request)
+          (setf (oref request pending)
                 "POST / HTTP/1.1
 User-Agent: curl/7.33.0
 Host: localhost:8080
@@ -135,7 +135,7 @@ Content-Disposition: form-data; name=\"name\"
 ------------------f1270d0deb77af03--
 ")
           (ws-parse-request request)
-          (let ((headers (cdr (headers request))))
+          (let ((headers (cdr (oref request headers))))
             (should (string= (cdr (assoc 'content (cdr (assoc "name" headers))))
                              "\"schulte\""))
             (should (string= (cdr (assoc 'content (cdr (assoc "date" headers))))
@@ -148,7 +148,7 @@ Content-Disposition: form-data; name=\"name\"
         (request (make-instance 'ws-request)))
     (unwind-protect
         (progn
-          (setf (pending request)
+          (setf (oref request pending)
                 "POST /complex.org HTTP/1.1
 Host: localhost:4444
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -167,7 +167,7 @@ Cache-Control: no-cache
 
 org=-+one%0A-+two%0A-+three%0A-+four%0A%0A&beg=646&end=667&path=%2Fcomplex.org")
           (ws-parse-request request)
-          (let ((headers (cdr (headers request))))
+          (let ((headers (cdr (oref request headers))))
             (should (string= (cdr (assoc "path" headers)) "/complex.org"))
             (should (string= (cdr (assoc "beg" headers)) "646"))
             (should (string= (cdr (assoc "end" headers)) "667"))
@@ -192,7 +192,7 @@ The handler can then parse it itself."
         (request (make-instance 'ws-request)))
     (unwind-protect
         (progn
-          (setf (pending request)
+          (setf (oref request pending)
                 "POST /complex.org HTTP/1.1
 Host: localhost:4444
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
@@ -210,7 +210,7 @@ Cache-Control: no-cache
 
 {\"some example\": \"json data\"}")
           (ws-parse-request request)
-          (let ((headers (cdr (headers request))))
+          (let ((headers (cdr (oref request headers))))
             (should (string= (cdr (assoc :CONTENT-TYPE headers))
                              "application/json"))
             (should (string= (oref request body)
@@ -260,7 +260,7 @@ Cache-Control: no-cache
          (username "foo") (password "bar"))
     (unwind-protect
         (progn
-          (setf (pending request)
+          (setf (oref request pending)
                 (format "GET / HTTP/1.1
 Authorization: Basic %s
 Connection: keep-alive
@@ -280,7 +280,7 @@ At least when it comes in a single chunk."
          (request (make-instance 'ws-request)))
     (unwind-protect
         (progn
-          (setf (pending request)
+          (setf (oref request pending)
                 (format "POST / HTTP/1.1
 User-Agent: curl/7.34.0
 Host: localhost:9008
@@ -301,7 +301,7 @@ Content-Type: application/octet-stream
           (should
            (string= long-string
                     (cdr (assoc 'content
-                                (cdr (assoc "file" (headers request))))))))
+                                (cdr (assoc "file" (oref request headers))))))))
       (ws-stop server))))
 
 (ert-deftest ws/web-socket-handshake-rfc-example ()
