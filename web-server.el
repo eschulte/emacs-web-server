@@ -51,20 +51,20 @@
 (require 'cl-lib)
 
 (defclass ws-server ()
-  ((handlers :initarg :handlers :accessor handlers :initform nil)
-   (process  :initarg :process  :accessor process  :initform nil)
-   (port     :initarg :port     :accessor port     :initform nil)
-   (requests :initarg :requests :accessor requests :initform nil)))
+  ((handlers :initarg :handlers :accessor ws-handlers :initform nil)
+   (process  :initarg :process  :accessor ws-process  :initform nil)
+   (port     :initarg :port     :accessor ws-port     :initform nil)
+   (requests :initarg :requests :accessor ws-requests :initform nil)))
 
 (defclass ws-request ()
-  ((process  :initarg :process  :accessor process  :initform nil)
-   (pending  :initarg :pending  :accessor pending  :initform "")
-   (context  :initarg :context  :accessor context  :initform nil)
-   (boundary :initarg :boundary :accessor boundary :initform nil)
-   (index    :initarg :index    :accessor index    :initform 0)
-   (active   :initarg :active   :accessor active   :initform nil)
-   (headers  :initarg :headers  :accessor headers  :initform (list nil))
-   (body     :initarg :body     :accessor body     :initform "")))
+  ((process  :initarg :process  :accessor ws-process  :initform nil)
+   (pending  :initarg :pending  :accessor ws-pending  :initform "")
+   (context  :initarg :context  :accessor ws-context  :initform nil)
+   (boundary :initarg :boundary :accessor ws-boundary :initform nil)
+   (index    :initarg :index    :accessor ws-index    :initform 0)
+   (active   :initarg :active   :accessor ws-active   :initform nil)
+   (headers  :initarg :headers  :accessor ws-headers  :initform (list nil))
+   (body     :initarg :body     :accessor ws-body     :initform "")))
 
 (defvar ws-servers nil
   "List holding all web servers.")
@@ -122,7 +122,7 @@ function.
           (apply
            #'make-network-process
            :name "ws-server"
-           :service (port server)
+           :service (ws-port server)
            :filter 'ws-filter
            :server t
            :nowait (< emacs-major-version 26)
@@ -146,8 +146,8 @@ function.
 (defun ws-stop (server)
   "Stop SERVER."
   (setq ws-servers (remove server ws-servers))
-  (mapc #'delete-process (append (mapcar #'process (requests server))
-                                 (list (process server)))))
+  (mapc #'delete-process (append (mapcar #'ws-process (ws-requests server))
+                                 (list (ws-process server)))))
 
 (defun ws-stop-all ()
   "Stop all servers in `ws-servers'."
@@ -227,12 +227,12 @@ function.
 
 (defun ws-filter (proc string)
   (with-slots (handlers requests) (plist-get (process-plist proc) :server)
-    (unless (cl-find-if (lambda (c) (equal proc (process c))) requests)
+    (unless (cl-find-if (lambda (c) (equal proc (ws-process c))) requests)
       (push (make-instance 'ws-request :process proc) requests))
-    (let ((request (cl-find-if (lambda (c) (equal proc (process c))) requests)))
+    (let ((request (cl-find-if (lambda (c) (equal proc (ws-process c))) requests)))
       (with-slots (pending) request (setq pending (concat pending string)))
-      (unless (active request) ; don't re-start if request is being parsed
-        (setf (active request) t)
+      (unless (ws-active request) ; don't re-start if request is being parsed
+        (setf (ws-active request) t)
         (when (not (eq (catch 'close-connection
                          (if (ws-parse-request request)
                              (ws-call-handler request handlers)
@@ -241,7 +241,7 @@ function.
           ;; Properly shut down processes requiring an ending (e.g., chunked)
           (let ((ender (plist-get (process-plist proc) :ender)))
             (when ender (process-send-string proc ender)))
-          (setq requests (cl-remove-if (lambda (r) (eql proc (process r))) requests))
+          (setq requests (cl-remove-if (lambda (r) (eql proc (ws-process r))) requests))
           (delete-process proc))))))
 
 (defun ws-parse-request (request)
@@ -310,7 +310,7 @@ Return non-nil only when parsing is complete."
                   ;; All other headers are collected directly.
                   (setcdr (last headers) header))))
             (setq index tmp)))))
-    (setf (active request) nil)
+    (setf (ws-active request) nil)
     nil))
 
 (defun ws-call-handler (request handlers)
@@ -318,23 +318,23 @@ Return non-nil only when parsing is complete."
     (when (functionp handlers)
       (throw 'matched-handler
              (condition-case e (funcall handlers request)
-               (error (ws-error (process request) "Caught Error: %S" e)))))
+               (error (ws-error (ws-process request) "Caught Error: %S" e)))))
     (mapc (lambda (handler)
             (let ((match (car handler))
                   (function (cdr handler)))
               (when (or (and (consp match)
-                             (assoc (car match) (headers request))
+                             (assoc (car match) (ws-headers request))
                              (string-match (cdr match)
                                            (cdr (assoc (car match)
-                                                       (headers request)))))
+                                                       (ws-headers request)))))
                         (and (functionp match) (funcall match request)))
                 (throw 'matched-handler
                        (condition-case e (funcall function request)
-                         (error (ws-error (process request)
+                         (error (ws-error (ws-process request)
                                           "Caught Error: %S" e)))))))
           handlers)
-    (ws-error (process request) "no handler matched request: %S"
-              (headers request))))
+    (ws-error (ws-process request) "no handler matched request: %S"
+              (ws-headers request))))
 
 (defun ws-error (proc msg &rest args)
   (let ((buf (plist-get (process-plist proc) :log-buffer))
@@ -366,12 +366,12 @@ Return non-nil only when parsing is complete."
 ;; handler ------ holds the user-supplied function used called on the
 ;;                data of parsed messages
 (defclass ws-message ()                 ; web socket message object
-  ((process  :initarg :process  :accessor process  :initform "")
-   (pending  :initarg :pending  :accessor pending  :initform "")
-   (active   :initarg :active   :accessor active   :initform nil)
-   (new      :initarg :new      :accessor new      :initform nil)
-   (data     :initarg :data     :accessor data     :initform "")
-   (handler  :initarg :handler  :accessor handler  :initform "")))
+  ((process  :initarg :process  :accessor ws-process  :initform "")
+   (pending  :initarg :pending  :accessor ws-pending  :initform "")
+   (active   :initarg :active   :accessor ws-active   :initform nil)
+   (new      :initarg :new      :accessor ws-new      :initform nil)
+   (data     :initarg :data     :accessor ws-data     :initform "")
+   (handler  :initarg :handler  :accessor ws-handler  :initform "")))
 
 (defun ws-web-socket-connect (request handler)
   "Establish a web socket connection with request.
@@ -403,12 +403,12 @@ received and parsed from the network."
 
 (defun ws-web-socket-filter (process string)
   (let ((message (plist-get (process-plist process) :message)))
-    (if (active message) ; don't re-start if message is being parsed
-        (setf (new message) string)
-      (setf (pending message) (concat (pending message) string))
-      (setf (active message) t)
+    (if (ws-active message) ; don't re-start if message is being parsed
+        (setf (ws-new message) string)
+      (setf (ws-pending message) (concat (ws-pending message) string))
+      (setf (ws-active message) t)
       (ws-web-socket-parse-messages message))
-    (setf (active message) nil)))
+    (setf (ws-active message) nil)))
 
 (defun ws-web-socket-mask (masking-key data)
   (let ((masking-data (apply #'concat (make-list (+ 1 (/ (length data) 4))
@@ -514,7 +514,7 @@ See RFC6455."
             (when (< (+ index pl) (length pending))
               (setq pending (substring pending (+ index pl)))))))
       ;; possibly re-parse any pending input
-      (when (new message) (ws-web-socket-parse-messages message)))))
+      (when (ws-new message) (ws-web-socket-parse-messages message)))))
 
 (defun ws-web-socket-frame (string &optional opcode)
   "Frame STRING for web socket communication."
@@ -726,6 +726,24 @@ respectively."
 (defun ws-web-socket-handshake (key)
   "Perform the handshake defined in RFC6455."
   (base64-encode-string (sha1 (concat (ws-trim key) ws-guid) nil nil 'binary)))
+
+;;; Enable the old accessors without the `ws-' namespace as obsolete.
+;;; Lets plan to remove these within a year of the date they were
+;;; marked obsolete, so that would be roughly 2021-03-12.
+(define-obsolete-function-alias 'active 'ws-active "2020-03-12")
+(define-obsolete-function-alias 'body 'ws-body "2020-03-12")
+(define-obsolete-function-alias 'boundary 'ws-boundary "2020-03-12")
+(define-obsolete-function-alias 'context 'ws-context "2020-03-12")
+(define-obsolete-function-alias 'data 'ws-data "2020-03-12")
+(define-obsolete-function-alias 'handler 'ws-handler "2020-03-12")
+(define-obsolete-function-alias 'handlers 'ws-handlers "2020-03-12")
+(define-obsolete-function-alias 'headers 'ws-headers "2020-03-12")
+(define-obsolete-function-alias 'index 'ws-index "2020-03-12")
+(define-obsolete-function-alias 'new 'ws-new "2020-03-12")
+(define-obsolete-function-alias 'pending 'ws-pending "2020-03-12")
+(define-obsolete-function-alias 'port 'ws-port "2020-03-12")
+(define-obsolete-function-alias 'process 'ws-process "2020-03-12")
+(define-obsolete-function-alias 'requests 'ws-requests "2020-03-12")
 
 (provide 'web-server)
 ;;; web-server.el ends here
