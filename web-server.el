@@ -118,7 +118,7 @@ function.
 "
   (let ((server (make-instance 'ws-server :handlers handlers :port port))
         (log (when log-buffer (get-buffer-create log-buffer))))
-    (setf (process server)
+    (setf (ws-process server)
           (apply
            #'make-network-process
            :name "ws-server"
