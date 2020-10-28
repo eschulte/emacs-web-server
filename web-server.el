@@ -381,9 +381,9 @@ in the request handler.  If no web-socket connection is
 established (e.g., because REQUEST is not attempting to establish
 a connection) then no actions are taken and nil is returned.
 
-Second argument HANDLER should be a function of one argument
-which will be called on all complete messages as they are
-received and parsed from the network."
+Second argument HANDLER should be a function of two arguments,
+the process and a string, which will be called on all complete
+messages as they are received and parsed from the network."
   (with-slots (process headers) request
     (when (assoc :SEC-WEBSOCKET-KEY headers)
       ;; Accept the connection
