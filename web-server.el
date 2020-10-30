@@ -108,11 +108,11 @@ function MATCH and the `ws-response-header' convenience
 function.
 
   (ws-start
-   (list (cons (lambda (_request) t)
-               (lambda (request)
-                 (with-slots ((proc process)) request
-                   (ws-response-header proc 200 '(\"Content-Type\" . \"text/plain\"))
-                   (process-send-string proc \"hello world\")))))
+   `(((lambda (_) t) .
+      (lambda (request)
+        (with-slots ((proc process)) request
+          (ws-response-header proc 200 '(\"Content-Type\" . \"text/plain\"))
+          (process-send-string proc \"hello world\")))))
    8080)
 
 "
