@@ -363,8 +363,9 @@ Return non-nil only when parsing is complete."
 ;;                and causes `ws-web-socket-parse-messages' to be
 ;;                called again after it terminates
 ;; data --------- holds the data of parsed messages
-;; handler ------ holds the user-supplied function used called on the
-;;                data of parsed messages
+;; handler ------ holds the user-supplied function of two arguments
+;;                called on the process and the data of parsed
+;;                messages
 (defclass ws-message ()                 ; web socket message object
   ((process  :initarg :process  :accessor ws-process  :initform "")
    (pending  :initarg :pending  :accessor ws-pending  :initform "")
