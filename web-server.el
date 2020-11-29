@@ -163,8 +163,17 @@ function.
 
 (defun ws-parse-query-string (string)
   "Thin wrapper around `url-parse-query-string'."
-  (mapcar (lambda (pair) (cons (first pair) (second pair)))
-          (url-parse-query-string string nil 'allow-newlines)))
+  (let (alist)
+    (mapcar (lambda (pair)
+              (if (> (length pair) 2)
+                  (let ((key (first pair)))
+                    (setf alist (append alist 
+                                        (mapcar (lambda (value)
+                                                  (cons key value))
+                                                (rest pair)))))
+                (setf alist (cons (cons (first pair) (second pair)) alist))))
+            (url-parse-query-string string nil 'allow-newlines))
+    alist))
 
 (defun ws-parse (proc string)
   "Parse HTTP headers in STRING reporting errors to PROC."
