@@ -1,6 +1,6 @@
-;;; web-server-status-codes.el --- Emacs Web Server HTML status codes
+;;; web-server-status-codes.el --- Emacs Web Server HTML status codes  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2014  Free Software Foundation, Inc.
+;; Copyright (C) 2013-2021  Free Software Foundation, Inc.
 
 ;; This software is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

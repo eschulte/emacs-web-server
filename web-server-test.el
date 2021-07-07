@@ -1,6 +1,6 @@
-;;; web-server-test.el --- Test the Emacs Web Server
+;;; web-server-test.el --- Test the Emacs Web Server  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2014  Free Software Foundation, Inc.
+;; Copyright (C) 2013-2021  Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte <schulte.eric@gmail.com>
 
@@ -20,7 +20,6 @@
 ;;; Code:
 (require 'web-server)
 (require 'cl-lib)
-(eval-when-compile (require 'cl))
 (require 'ert)
 
 (defvar ws-test-port 8999)
@@ -314,9 +313,9 @@ Content-Type: application/octet-stream
    0-125, 126-64k, 64k-2^64."
   (should (string= (ws-web-socket-frame "short") "\201short"))
   (should (string= (substring (ws-web-socket-frame (make-string 126 ?a))
-                              0 5) "\201~ ~a"))
+                              0 5) "\201~\0~a"))
   (should (string= (substring (ws-web-socket-frame (make-string 65536 ?a))
-                              0 11) "\201       a")))
+                              0 11) "\201\0\0\0\0\0\0\0a")))
 
 (ert-deftest ws/simple-chunked ()
   "Test a simple server using chunked transfer encoding."
