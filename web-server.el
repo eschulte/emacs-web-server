@@ -509,7 +509,7 @@ See RFC6455."
                 (if (not (eql opcode :CLOSE))
                     (funcall handler process it)
                   (process-send-string process
-                    (unibyte-string (logior (lsh 1 7) 8) 0))))
+                    (unibyte-string (logior (ash 1 7) 8) 0))))
             ;; add any remaining un-parsed network data to pending
             (when (< (+ index pl) (length pending))
               (setq pending (substring pending (+ index pl)))))))
@@ -524,20 +524,20 @@ See RFC6455."
     ;; Does not do any masking which is only required of client communication
     (concat
      (cond
-      ((< len 126) (unibyte-string (logior (lsh fin 7) opcode) len))
-      ((< len 65536) (unibyte-string (logior (lsh fin 7) opcode) 126
+      ((< len 126) (unibyte-string (logior (ash fin 7) opcode) len))
+      ((< len 65536) (unibyte-string (logior (ash fin 7) opcode) 126
                                      ;; extended 16-bit length
-                                     (logand (lsh len -8) 255)
+                                     (logand (ash len -8) 255)
                                      (logand      len     255)))
-      (t (unibyte-string (logior (lsh fin 7) opcode) 127
+      (t (unibyte-string (logior (ash fin 7) opcode) 127
                          ;; more extended 64-bit length
-                         (logand (lsh len -56) 255)
-                         (logand (lsh len -48) 255)
-                         (logand (lsh len -40) 255)
-                         (logand (lsh len -32) 255)
-                         (logand (lsh len -24) 255)
-                         (logand (lsh len -16) 255)
-                         (logand (lsh len -8)  255)
+                         (logand (ash len -56) 255)
+                         (logand (ash len -48) 255)
+                         (logand (ash len -40) 255)
+                         (logand (ash len -32) 255)
+                         (logand (ash len -24) 255)
+                         (logand (ash len -16) 255)
+                         (logand (ash len -8)  255)
                          (logand      len      255))))
      string)))
 
