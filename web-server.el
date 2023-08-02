@@ -62,6 +62,7 @@
    (boundary :initarg :boundary :accessor ws-boundary :initform nil)
    (index    :initarg :index    :accessor ws-index    :initform 0)
    (active   :initarg :active   :accessor ws-active   :initform nil)
+   (length   :initarg :length   :accessor ws-length   :initform nil)
    (headers  :initarg :headers  :accessor ws-headers  :initform (list nil))
    (body     :initarg :body     :accessor ws-body     :initform "")))
 
@@ -232,11 +233,10 @@ function.
       (with-slots (pending) request (setq pending (concat pending string)))
       (unless (ws-active request) ; don't re-start if request is being parsed
         (setf (ws-active request) t)
-        (when (not (eq (catch 'close-connection
-                         (if (ws-parse-request request)
-                             (ws-call-handler request handlers)
-                           :keep-alive))
-                       :keep-alive))
+        (when (catch 'close-connection
+                (when (ws-parse-request request)
+		  (prog1 t
+                    (ws-call-handler request handlers))))
           ;; Properly shut down processes requiring an ending (e.g., chunked)
           (let ((ender (plist-get (process-plist proc) :ender)))
             (when ender (process-send-string proc ender)))
@@ -247,7 +247,7 @@ function.
   "Parse request STRING from REQUEST with process PROC.
 Return non-nil only when parsing is complete."
   (catch 'finished-parsing-headers
-    (with-slots (process pending context boundary headers body index) request
+    (with-slots (process pending context boundary headers body index length) request
       (let ((delimiter (concat "\r\n" (if boundary (concat "--" boundary) "")))
             ;; Track progress through string, always work with the
             ;; section of string between INDEX and NEXT-INDEX.
@@ -258,11 +258,15 @@ Return non-nil only when parsing is complete."
           (let ((tmp (+ next-index (length delimiter))))
             (if (= index next-index) ; double \r\n ends current run of headers
                 (progn
-                  ;; Store the body
-                  (unless
-                      ;; Multipart form data has multiple passes - store on
-                      ;; first pass only.
-                      body-stored
+		  (when (and (eq context 'application/x-www-form-urlencoded)
+			     (numberp length)
+			     (< (length (substring pending index)) length))
+		    ;; Some form data remains untransmitted.
+		    (setf (ws-active request) nil)
+		    (throw 'finished-parsing-headers nil))
+                  ;; Multipart form data has multiple passes - store on
+                  ;; first pass only.
+                  (unless body-stored
                     (let ((after-headers (substring pending index)))
                       (when (string-prefix-p "\r\n" after-headers)
                         (setq body
@@ -296,16 +300,22 @@ Return non-nil only when parsing is complete."
                 ;; Standard header parsing.
                 (let ((header (ws-parse process (substring pending
                                                            index next-index))))
-                  ;; Content-Type indicates that the next double \r\n
-                  ;; will be followed by a special type of content which
-                  ;; will require special parsing.  Thus we will note
-                  ;; the type in the CONTEXT variable for parsing
-                  ;; dispatch above.
-                  (when (and (caar header) (eql (caar header) :CONTENT-TYPE))
-                    (cl-destructuring-bind (type &rest data)
-                        (mail-header-parse-content-type (cdar header))
-                      (setq boundary (cdr (assoc 'boundary data)))
-                      (setq context (intern (downcase type)))))
+		  (cl-case (caar header)
+		    (:CONTENT-LENGTH
+		     (let ((length* (or (ignore-errors (string-to-number (cdar header)))
+					0)))
+		       (unless (zerop length*)
+			 (setq length length*))))
+		    (:CONTENT-TYPE
+                     ;; Content-Type indicates that the next double \r\n
+                     ;; will be followed by a special type of content which
+                     ;; will require special parsing.  Thus we will note
+                     ;; the type in the CONTEXT variable for parsing
+                     ;; dispatch above.
+		     (cl-destructuring-bind (type &rest data)
+                         (mail-header-parse-content-type (cdar header))
+		       (setq boundary (cdr (assoc 'boundary data)))
+		       (setq context (intern (downcase type))))))
                   ;; All other headers are collected directly.
                   (setcdr (last headers) header))))
             (setq index tmp)))))
@@ -629,7 +639,7 @@ STRING before sending."
   (process-send-string proc (if msg-and-args
                                 (apply #'format msg-and-args)
                               "500 Internal Server Error"))
-  (throw 'close-connection nil))
+  (throw 'close-connection t))
 
 (defun ws-send-404 (proc &rest msg-and-args)
   "Send 404 \"Not Found\" to PROC with an optional message."
@@ -638,7 +648,7 @@ STRING before sending."
   (process-send-string proc (if msg-and-args
                                 (apply #'format msg-and-args)
                               "404 Not Found"))
-  (throw 'close-connection nil))
+  (throw 'close-connection t))
 
 (defun ws-send-file (proc path &optional mime-type)
   "Send PATH to PROC.
