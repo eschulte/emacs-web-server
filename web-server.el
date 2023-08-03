@@ -260,7 +260,7 @@ Return non-nil only when parsing is complete."
                 (progn
 		  (when (and (eq context 'application/x-www-form-urlencoded)
 			     (numberp length)
-			     (< (length (substring pending index)) length))
+			     (< (length (vconcat (substring pending index))) length))
 		    ;; Some form data remains untransmitted.
 		    (setf (ws-active request) nil)
 		    (throw 'finished-parsing-headers nil))
